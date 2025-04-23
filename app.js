@@ -1,4 +1,4 @@
-const apiKey = '25b39a542e7e02dfb922350f415f4a35'; // Your OpenWeather API Key
+const apiKey = 'YOUR_API_KEY'; // Replace with your OpenWeather API Key
 
 async function loadWeather() {
   const currentUrl = `https://api.openweathermap.org/data/2.5/weather?q=Yarmouth,ca&units=metric&appid=${apiKey}`;
@@ -8,7 +8,6 @@ async function loadWeather() {
   try {
     const res = await fetch(currentUrl);
     const data = await res.json();
-
     const condition = data.weather[0]?.description ?? "N/A";
     const temp = data.main?.temp ?? "N/A";
 
@@ -16,10 +15,6 @@ async function loadWeather() {
       <p><strong>Condition:</strong> ${condition}</p>
       <p><strong>Temperature:</strong> ${temp}°C</p>
     `;
-  } catch (err) {
-    console.error(err);
-    document.getElementById('current-weather').innerHTML = 'Error loading current weather.';
-  }
 
   // Load forecast
   try {
@@ -42,10 +37,7 @@ async function loadWeather() {
     });
 
     document.getElementById('forecast').innerHTML = html;
-  } catch (err) {
-    console.error(err);
-    document.getElementById('forecast').innerHTML = 'Error loading forecast.';
-  }
+
 }
 
 loadWeather();
