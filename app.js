@@ -1,4 +1,4 @@
-const apiKey = 'YOUR_API_KEY'; // Replace with your OpenWeather API Key
+const apiKey = '25b39a542e7e02dfb922350f415f4a35'; // Your OpenWeather API Key
 
 async function loadWeather() {
   const currentUrl = `https://api.openweathermap.org/data/2.5/weather?q=Yarmouth,ca&units=metric&appid=${apiKey}`;
@@ -15,29 +15,40 @@ async function loadWeather() {
       <p><strong>Condition:</strong> ${condition}</p>
       <p><strong>Temperature:</strong> ${temp}°C</p>
     `;
+  } catch (err) {
+    console.error(err);
+    document.getElementById('current-weather').innerHTML = 'Error loading current weather.';
+  }
 
   // Load forecast
   try {
     const res = await fetch(forecastUrl);
     const data = await res.json();
-    const days = data.daily.slice(0, 7); // Get the 7-day forecast
+    const days = data.daily; // Get the 7-day forecast
 
-    let html = '';
-    days.forEach(day => {
-      const date = new Date(day.dt * 1000).toLocaleDateString();
-      const condition = day.weather[0]?.description ?? "N/A";
-      const tempMax = day.temp?.max ?? "N/A";
-      const tempMin = day.temp?.min ?? "N/A";
+    // If the forecast is not empty, display it
+    if (days && days.length > 0) {
+      let html = '';
+      days.forEach(day => {
+        const date = new Date(day.dt * 1000).toLocaleDateString();
+        const condition = day.weather[0]?.description ?? "N/A";
+        const tempMax = day.temp?.max ?? "N/A";
+        const tempMin = day.temp?.min ?? "N/A";
 
-      html += `
-        <div>
-          <strong>${date}</strong>: ${condition} | ${tempMax}°C / ${tempMin}°C
-        </div>
-      `;
-    });
-
-    document.getElementById('forecast').innerHTML = html;
-
+        html += `
+          <div>
+            <strong>${date}</strong>: ${condition} | ${tempMax}°C / ${tempMin}°C
+          </div>
+        `;
+      });
+      document.getElementById('forecast').innerHTML = html;
+    } else {
+      document.getElementById('forecast').innerHTML = 'No forecast data available.';
+    }
+  } catch (err) {
+    console.error(err);
+    document.getElementById('forecast').innerHTML = 'Error loading forecast.';
+  }
 }
 
 loadWeather();
