@@ -15,10 +15,7 @@ async function loadWeather() {
       <p><strong>Condition:</strong> ${condition}</p>
       <p><strong>Temperature:</strong> ${temp}°C</p>
     `;
-  } catch (err) {
-    console.error(err);
-    document.getElementById('current-weather').innerHTML = 'Error loading current weather.';
-  }
+
 
   // Load forecast
   try {
@@ -42,13 +39,6 @@ async function loadWeather() {
         `;
       });
       document.getElementById('forecast').innerHTML = html;
-    } else {
-      document.getElementById('forecast').innerHTML = 'No forecast data available.';
-    }
-  } catch (err) {
-    console.error(err);
-    document.getElementById('forecast').innerHTML = 'Error loading forecast.';
-  }
-}
+  
 
 loadWeather();
