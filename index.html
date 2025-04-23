@@ -55,9 +55,10 @@
   </footer>
 
   <script>
-    const currentUrl = 'https://dd.weather.gc.ca/citypage_weather/xml/NS/s0000787_e.xml'; // Yarmouth
+    const proxyUrl = 'https://corsproxy.io/?';
+    const currentUrl = 'https://dd.weather.gc.ca/citypage_weather/xml/NS/s0000787_e.xml';
 
-    fetch(currentUrl)
+    fetch(proxyUrl + encodeURIComponent(currentUrl))
       .then(res => res.text())
       .then(data => {
         const parser = new DOMParser();
