@@ -2,63 +2,95 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Yarmouth, NS Weather Dashboard</title>
+  <title>Yarmouth, NS Weather</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f7f8;
-      margin: 20px auto;
-      padding: 20px;
-      max-width: 800px;
-      border-radius: 10px;
-      background-color: #fff;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f2f4f7;
+      color: #222;
     }
-    h1, h2 {
-      color: #00468b;
+
+    header {
+      background-color: #003366;
+      color: white;
+      padding: 20px 40px;
     }
+
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
     .section {
+      background-color: white;
+      padding: 20px;
       margin-bottom: 30px;
+      border-left: 6px solid #004080;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
     }
+
+    .section h2 {
+      margin-top: 0;
+      color: #004080;
+    }
+
     .forecast-day {
-      margin-bottom: 10px;
+      margin: 10px 0;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
     }
+
     .alert {
-      background-color: #ffe5e5;
-      border-left: 5px solid #cc0000;
-      padding: 15px;
+      background-color: #fff4f4;
+      border-left: 6px solid #cc0000;
     }
+
+    footer {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      margin-top: 60px;
+      padding: 20px;
+    }
+
     a {
-      color: #00468b;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
+      color: #004080;
     }
   </style>
 </head>
 <body>
-  <h1>Yarmouth, NS Weather Dashboard</h1>
+  <header>
+    <h1>Yarmouth, NS Weather</h1>
+  </header>
 
-  <div class="section" id="current-conditions">
-    <h2>Current Conditions</h2>
-    <p>Loading...</p>
-  </div>
+  <div class="container">
+    <div class="section" id="current-conditions">
+      <h2>Current Conditions</h2>
+      <p>Loading...</p>
+    </div>
 
-  <div class="section" id="forecast">
-    <h2>Forecast</h2>
-    <p>Loading...</p>
+    <div class="section" id="forecast">
+      <h2>7-Day Forecast</h2>
+      <p>Loading...</p>
+    </div>
   </div>
 
   <footer>
-    <p>Data from <a href="https://weather.gc.ca" target="_blank">Environment Canada</a></p>
+    Data provided by <a href="https://weather.gc.ca" target="_blank">Environment Canada</a>
   </footer>
 
   <script>
     const proxyUrl = 'https://corsproxy.io/?';
-    const currentUrl = 'https://dd.weather.gc.ca/citypage_weather/xml/NS/s0000787_e.xml';
+    const xmlUrl = 'https://dd.weather.gc.ca/citypage_weather/xml/NS/s0000787_e.xml';
 
-    fetch(proxyUrl + encodeURIComponent(currentUrl))
+    fetch(proxyUrl + encodeURIComponent(xmlUrl))
       .then(res => res.text())
       .then(data => {
         const parser = new DOMParser();
@@ -87,8 +119,7 @@
             </div>
           `;
         });
-
-        document.getElementById('forecast').innerHTML = "<h2>Forecast</h2>" + forecastHtml;
+        document.getElementById('forecast').innerHTML = "<h2>7-Day Forecast</h2>" + forecastHtml;
       })
       .catch(err => {
         document.getElementById('current-conditions').innerHTML = "<p>Error loading data.</p>";
