@@ -1,4 +1,4 @@
-const apiKey = 25b39a542e7e02dfb922350f415f4a35; // Replace with your OpenWeather API Key
+const apiKey = '25b39a542e7e02dfb922350f415f4a35'; // Your OpenWeather API Key
 
 async function loadWeather() {
   const currentUrl = `https://api.openweathermap.org/data/2.5/weather?q=Yarmouth,ca&units=metric&appid=${apiKey}`;
