@@ -1,0 +1,14 @@
+body {
+  font-family: sans-serif;
+  background: #eef;
+  padding: 20px;
+}
+
+.dashboard {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 600px;
+  margin: auto;
+  box-shadow: 0 0 10px #aaa;
+}
