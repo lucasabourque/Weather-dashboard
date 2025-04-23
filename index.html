@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Yarmouth Weather Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #006400, #00cc66);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .clock {
+            font-size: 3em;
+            margin-top: 20px;
+        }
+        .date {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+        .weather {
+            font-size: 1.2em;
+            text-align: center;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="clock" id="clock">--:--:--</div>
+    <div class="date" id="date">Loading date...</div>
+    <div class="weather" id="weather">Loading weather data...</div>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString();
+            document.getElementById('date').textContent = now.toLocaleDateString(undefined, {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        async function fetchWeather() {
+            const apiKey = 'd8525791b85b407f925791b85b107f22';
+            const stationId = 'IMUNIC376';
+            const url = `https://api.weather.com/v2/pws/observations/current?stationId=${stationId}&format=json&units=m&apiKey=${apiKey}`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                const obs = data.observations[0];
+                const weatherInfo = `
+                    <p><strong>Temperature:</strong> ${obs.metric.temp}°C</p>
+                    <p><strong>Humidity:</strong> ${obs.humidity}%</p>
+                    <p><strong>Wind:</strong> ${obs.winddir}° at ${obs.metric.windspeed} km/h</p>
+                    <p><strong>Pressure:</strong> ${obs.metric.pressure} hPa</p>
+                `;
+                document.getElementById('weather').innerHTML = weatherInfo;
+            } catch (error) {
+                document.getElementById('weather').textContent = 'Failed to load weather data.';
+                console.error('Error fetching weather data:', error);
+            }
+        }
+
+        fetchWeather();
+    </script>
+</body>
+</html>
