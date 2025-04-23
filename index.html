@@ -1,135 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Live Weather – Yarmouth, NS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Weather Icons CSS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.12/css/weather-icons.min.css">
+  <meta charset="UTF-8">
+  <title>Yarmouth, NS Weather Dashboard</title>
   <style>
     body {
-      margin: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
-      color: #ffffff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background: #f4f7f8;
+      margin: 20px auto;
+      padding: 20px;
+      max-width: 800px;
+      border-radius: 10px;
+      background-color: #fff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    .clock {
-      font-size: 4em;
-      font-weight: 300;
-      margin-bottom: 10px;
+    h1, h2 {
+      color: #00468b;
     }
-    .date {
-      font-size: 1.5em;
+    .section {
       margin-bottom: 30px;
     }
-    .weather {
-      display: flex;
-      align-items: center;
-      gap: 20px;
+    .forecast-day {
+      margin-bottom: 10px;
     }
-    .weather-icon {
-      font-size: 100px;
-      color: #FFD700;
+    .alert {
+      background-color: #ffe5e5;
+      border-left: 5px solid #cc0000;
+      padding: 15px;
     }
-    .weather-details {
-      font-size: 1.5em;
+    a {
+      color: #00468b;
+      text-decoration: none;
     }
-    .weather-details p {
-      margin: 5px 0;
+    a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <div class="clock" id="clock">--:--:--</div>
-  <div class="date" id="date">Loading date...</div>
-  <div class="weather" id="weather">
-    <i id="weather-icon" class="wi weather-icon"></i>
-    <div class="weather-details" id="weather-details">
-      <p>Loading weather data...</p>
-    </div>
+  <h1>Yarmouth, NS Weather Dashboard</h1>
+
+  <div class="section" id="current-conditions">
+    <h2>Current Conditions</h2>
+    <p>Loading...</p>
   </div>
 
+  <div class="section" id="forecast">
+    <h2>Forecast</h2>
+    <p>Loading...</p>
+  </div>
+
+  <footer>
+    <p>Data from <a href="https://weather.gc.ca" target="_blank">Environment Canada</a></p>
+  </footer>
+
   <script>
-    function updateClock() {
-      const now = new Date();
-      document.getElementById('clock').textContent = now.toLocaleTimeString();
-      document.getElementById('date').textContent = now.toLocaleDateString(undefined, {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
+    const currentUrl = 'https://dd.weather.gc.ca/citypage_weather/xml/NS/s0000787_e.xml'; // Yarmouth
 
-    async function fetchWeather() {
-      const apiKey = 'd8525791b85b407f925791b85b107f22';
-      const stationId = 'IMUNIC376';
-      const currentUrl = `https://api.weather.com/v2/pws/observations/current?stationId=${stationId}&format=json&units=m&apiKey=${apiKey}`;
+    fetch(currentUrl)
+      .then(res => res.text())
+      .then(data => {
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(data, "application/xml");
 
-      try {
-        const response = await fetch(currentUrl);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        const obs = data.observations[0];
+        const current = xml.querySelector('currentConditions');
+        const forecastNodes = xml.querySelectorAll('forecastGroup > forecast');
 
-        const temp = obs.metric.temp;
-        const humidity = obs.humidity;
-        const windSpeed = obs.metric.windSpeed;
-        const windDir = obs.winddir;
-        const pressure = obs.metric.pressure;
-        const condition = obs.condition.toLowerCase();
-
-        const weatherIcons = {
-          'clear': 'wi-day-sunny',
-          'cloudy': 'wi-cloudy',
-          'rain': 'wi-rain',
-          'snow': 'wi-snow',
-          'thunderstorm': 'wi-thunderstorm',
-          'fog': 'wi-fog',
-          'haze': 'wi-day-haze',
-          'partly cloudy': 'wi-day-cloudy',
-          'mostly cloudy': 'wi-cloudy',
-          'overcast': 'wi-cloudy',
-          'light rain': 'wi-showers',
-          'heavy rain': 'wi-rain',
-          'light snow': 'wi-snow',
-          'heavy snow': 'wi-snow-wind',
-          'sleet': 'wi-sleet',
-          'mist': 'wi-fog',
-          'drizzle': 'wi-sprinkle',
-          'scattered clouds': 'wi-day-cloudy',
-          'broken clouds': 'wi-cloudy',
-          'few clouds': 'wi-day-sunny-overcast'
-          // Add more mappings as needed
-        };
-
-        const iconClass = weatherIcons[condition] || 'wi-na';
-        document.getElementById('weather-icon').className = `wi ${iconClass} weather-icon`;
-
-        document.getElementById('weather-details').innerHTML = `
-          <p><strong>Temperature:</strong> ${temp}°C</p>
-          <p><strong>Humidity:</strong> ${humidity}%</p>
-          <p><strong>Wind:</strong> ${windDir}° at ${windSpeed} km/h</p>
-          <p><strong>Pressure:</strong> ${pressure} hPa</p>
+        const currentHtml = `
+          <p><strong>Temperature:</strong> ${current.querySelector('temperature').textContent}°C</p>
+          <p><strong>Condition:</strong> ${current.querySelector('condition').textContent}</p>
+          <p><strong>Wind:</strong> ${current.querySelector('wind > speed').textContent} km/h from ${current.querySelector('wind > direction').textContent}</p>
+          <p><strong>Humidity:</strong> ${current.querySelector('relativeHumidity').textContent}%</p>
+          <p><strong>Pressure:</strong> ${current.querySelector('pressure').textContent} kPa</p>
+          <p><strong>Visibility:</strong> ${current.querySelector('visibility').textContent} km</p>
+          <p><strong>Updated:</strong> ${current.querySelector('dateTime[name="observation"] > text').textContent}</p>
         `;
-      } catch (error) {
-        document.getElementById('weather-details').innerHTML = '<p>Failed to load weather data.</p>';
-        console.error('Error fetching weather data:', error);
-      }
-    }
+        document.getElementById('current-conditions').innerHTML = "<h2>Current Conditions</h2>" + currentHtml;
 
-    fetchWeather();
-    setInterval(fetchWeather, 600000);
+        let forecastHtml = '';
+        forecastNodes.forEach(forecast => {
+          forecastHtml += `
+            <div class="forecast-day">
+              <strong>${forecast.querySelector('period').textContent}:</strong> 
+              ${forecast.querySelector('textSummary').textContent}
+            </div>
+          `;
+        });
+
+        document.getElementById('forecast').innerHTML = "<h2>Forecast</h2>" + forecastHtml;
+      })
+      .catch(err => {
+        document.getElementById('current-conditions').innerHTML = "<p>Error loading data.</p>";
+        document.getElementById('forecast').innerHTML = "<p>Error loading data.</p>";
+        console.error(err);
+      });
   </script>
 </body>
 </html>
