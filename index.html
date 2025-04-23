@@ -78,6 +78,9 @@
             try {
                 // Fetch current conditions
                 const currentResponse = await fetch(currentUrl);
+                if (!currentResponse.ok) {
+                    throw new Error(`Current conditions fetch failed: ${currentResponse.statusText}`);
+                }
                 const currentData = await currentResponse.json();
                 const obs = currentData.observations[0];
                 const weatherInfo = `
@@ -90,6 +93,9 @@
 
                 // Fetch forecast
                 const forecastResponse = await fetch(forecastUrl);
+                if (!forecastResponse.ok) {
+                    throw new Error(`Forecast fetch failed: ${forecastResponse.statusText}`);
+                }
                 const forecastData = await forecastResponse.json();
                 const forecastContainer = document.getElementById('forecast');
                 forecastContainer.innerHTML = '';
