@@ -14,8 +14,8 @@
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            padding: 20px;
         }
         .clock {
             font-size: 3em;
@@ -30,12 +30,30 @@
             text-align: center;
             margin: 20px;
         }
+        .forecast {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+        .forecast-day {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            width: 120px;
+        }
+        .forecast-day img {
+            width: 60px;
+            height: 60px;
+        }
     </style>
 </head>
 <body>
     <div class="clock" id="clock">--:--:--</div>
     <div class="date" id="date">Loading date...</div>
     <div class="weather" id="weather">Loading weather data...</div>
+    <div class="forecast" id="forecast">Loading forecast...</div>
 
     <script>
         function updateClock() {
@@ -54,12 +72,14 @@
         async function fetchWeather() {
             const apiKey = 'd8525791b85b407f925791b85b107f22';
             const stationId = 'IMUNIC376';
-            const url = `https://api.weather.com/v2/pws/observations/current?stationId=${stationId}&format=json&units=m&apiKey=${apiKey}`;
+            const currentUrl = `https://api.weather.com/v2/pws/observations/current?stationId=${stationId}&format=json&units=m&apiKey=${apiKey}`;
+            const forecastUrl = `https://api.weather.com/v3/wx/forecast/daily/7day?geocode=43.837,-66.117&format=json&units=m&language=en-US&apiKey=${apiKey}`;
 
             try {
-                const response = await fetch(url);
-                const data = await response.json();
-                const obs = data.observations[0];
+                // Fetch current conditions
+                const currentResponse = await fetch(currentUrl);
+                const currentData = await currentResponse.json();
+                const obs = currentData.observations[0];
                 const weatherInfo = `
                     <p><strong>Temperature:</strong> ${obs.metric.temp}°C</p>
                     <p><strong>Humidity:</strong> ${obs.humidity}%</p>
@@ -67,8 +87,35 @@
                     <p><strong>Pressure:</strong> ${obs.metric.pressure} hPa</p>
                 `;
                 document.getElementById('weather').innerHTML = weatherInfo;
+
+                // Fetch forecast
+                const forecastResponse = await fetch(forecastUrl);
+                const forecastData = await forecastResponse.json();
+                const forecastContainer = document.getElementById('forecast');
+                forecastContainer.innerHTML = '';
+
+                for (let i = 0; i < 7; i++) {
+                    const day = forecastData.dayOfWeek[i];
+                    const iconCode = forecastData.daypart[0].iconCode[i * 2]; // Daytime icon
+                    const iconUrl = `https://weather.com/weather/icons/${iconCode}.png`; // Placeholder URL; replace with actual icon path
+                    const highTemp = forecastData.temperatureMax[i];
+                    const lowTemp = forecastData.temperatureMin[i];
+                    const narrative = forecastData.narrative[i];
+
+                    const dayDiv = document.createElement('div');
+                    dayDiv.className = 'forecast-day';
+                    dayDiv.innerHTML = `
+                        <h4>${day}</h4>
+                        <img src="${iconUrl}" alt="Weather icon">
+                        <p>High: ${highTemp}°C</p>
+                        <p>Low: ${lowTemp}°C</p>
+                        <p>${narrative}</p>
+                    `;
+                    forecastContainer.appendChild(dayDiv);
+                }
             } catch (error) {
                 document.getElementById('weather').textContent = 'Failed to load weather data.';
+                document.getElementById('forecast').textContent = 'Failed to load forecast data.';
                 console.error('Error fetching weather data:', error);
             }
         }
