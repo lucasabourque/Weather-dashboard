@@ -4,100 +4,73 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Yarmouth, NS Weather Dashboard</title>
-  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Spinner animation */
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
     .spinner {
-      border: 4px solid #e5e7eb; /* gray-200 */
-      border-top-color: #3b82f6;  /* blue-500 */
-      border-radius: 50%;
-      width: 2rem;
-      height: 2rem;
+      border: 4px solid #e5e7eb; border-top-color: #3b82f6;
+      border-radius: 50%; width: 2rem; height: 2rem;
       animation: spin 1s linear infinite;
     }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
   <div class="max-w-3xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6 text-center">Yarmouth, NS Weather Dashboard</h1>
-
-    <div id="dashboard" class="space-y-8">
-      <!-- Current Conditions Card -->
-      <div id="current-card" class="bg-white rounded-2xl shadow p-6">
-        <h2 class="text-2xl font-semibold mb-4">Current Conditions</h2>
-        <div id="current-data" class="flex justify-center">
-          <div class="spinner"></div>
-        </div>
-      </div>
-
-      <!-- Forecast Cards -->
-      <div id="forecast-cards" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <!-- Forecast day cards will be injected here -->
-      </div>
+    <h1 class="text-3xl font-bold mb-6 text-center">Yarmouth, NS Weather</h1>
+    <div id="current-card" class="bg-white rounded-2xl shadow p-6 mb-8">
+      <h2 class="text-2xl font-semibold mb-4">Current Conditions</h2>
+      <div id="current-data" class="flex justify-center"><div class="spinner"></div></div>
+    </div>
+    <div id="forecast-cards" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <!-- forecast cards -->
     </div>
   </div>
-
   <script>
-    const API_KEY = 'd8525791b85b407f925791b85b107f22';
-    const STATION_ID = 'IMUNIC376';
-    const BASE = 'https://api.weather.com/v2/pws/';
+    const BASE = 'https://wu-proxy.yourdomain.workers.dev/';
 
     async function fetchData() {
-      // Show spinners
       document.getElementById('current-data').innerHTML = '<div class="spinner"></div>';
-      document.getElementById('forecast-cards').innerHTML = Array(4).fill(0).map(_ =>
-        `<div class="bg-white rounded-2xl shadow p-4 flex justify-center"><div class="spinner"></div></div>`
-      ).join('');
+      document.getElementById('forecast-cards').innerHTML =
+        Array(4).fill().map(_ =>
+          `<div class="bg-white rounded-2xl shadow p-4 flex justify-center"><div class="spinner"></div></div>`
+        ).join('');
 
       try {
-        // Current conditions
-        let res = await fetch(`${BASE}observations/current?stationId=${STATION_ID}&format=json&apiKey=${API_KEY}`);
+        let res = await fetch(BASE + 'observations/current');
+        if (!res.ok) throw new Error(res.status);
         let cur = (await res.json()).observations[0];
-
         document.getElementById('current-data').innerHTML = `
           <div class="grid grid-cols-2 gap-4 text-center">
-            <div>
-              <p class="text-xl font-bold">${cur.metric.temp} °C</p>
-              <p class="text-sm text-gray-500">Temperature</p>
-            </div>
-            <div>
-              <p class="text-xl font-bold">${cur.humidity}%</p>
-              <p class="text-sm text-gray-500">Humidity</p>
-            </div>
-            <div>
-              <p class="text-xl font-bold">${cur.metric.windSpeed} km/h</p>
-              <p class="text-sm text-gray-500">Wind Speed</p>
-            </div>
-            <div>
-              <p class="text-sm text-gray-500">${new Date(cur.obsTimeUtc).toLocaleTimeString()}</p>
-              <p class="text-sm text-gray-500">Last Update</p>
-            </div>
-          </div>
-        `;
+            <div><p class="text-xl font-bold">${cur.metric.temp} °C</p><p class="text-sm text-gray-500">Temp</p></div>
+            <div><p class="text-xl font-bold">${cur.humidity}%</p><p class="text-sm text-gray-500">Humidity</p></div>
+            <div><p class="text-xl font-bold">${cur.metric.windSpeed} km/h</p><p class="text-sm text-gray-500">Wind</p></div>
+            <div><p class="text-sm text-gray-500">${new Date(cur.obsTimeUtc).toLocaleTimeString()}</p><p class="text-sm text-gray-500">Updated</p></div>
+          </div>`;
 
-        // Forecast
-        res = await fetch(`${BASE}forecast/daily/5day?stationId=${STATION_ID}&format=json&units=m&apiKey=${API_KEY}`);
+        res = await fetch(BASE + 'forecast/daily/5day');
+        if (!res.ok) throw new Error(res.status);
         let days = (await res.json()).forecasts.slice(1,5);
-
         document.getElementById('forecast-cards').innerHTML = days.map(d => `
           <div class="bg-white rounded-2xl shadow p-6 flex flex-col">
-            <h3 class="text-lg font-semibold mb-2">${new Date(d.fcst_valid_local).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</h3>
+            <h3 class="text-lg font-semibold mb-2">${new Date(d.fcst_valid_local).toLocaleDateString(undefined,{weekday:'long',month:'short',day:'numeric'})}</h3>
             <p class="text-xl font-bold mb-1">High ${d.max_temp} °C</p>
             <p class="text-xl font-bold mb-3 text-blue-600">Low ${d.min_temp} °C</p>
             <p class="text-gray-600 flex-grow">${d.narrative}</p>
           </div>
         `).join('');
-
-      } catch (err) {
+      } catch (e) {
         document.getElementById('current-data').textContent = 'Error loading data.';
         document.getElementById('forecast-cards').textContent = '';
-        console.error(err);
+        console.error(e);
       }
     }
+
+    fetchData();
+    setInterval(fetchData, 10 * 60 * 1000);
+  </script>
+</body>
+</html>
+
 
     // Initial fetch and auto‑refresh every 10 minutes
     fetchData();
