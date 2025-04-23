@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <title>Live Weather – Yarmouth, NS</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Weather Icons CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.12/css/weather-icons.min.css">
   <style>
     body {
       margin: 0;
@@ -32,8 +34,8 @@
       gap: 20px;
     }
     .weather-icon {
-      width: 100px;
-      height: 100px;
+      font-size: 100px;
+      color: #FFD700;
     }
     .weather-details {
       font-size: 1.5em;
@@ -47,7 +49,7 @@
   <div class="clock" id="clock">--:--:--</div>
   <div class="date" id="date">Loading date...</div>
   <div class="weather" id="weather">
-    <img id="weather-icon" class="weather-icon" src="" alt="Weather Icon" />
+    <i id="weather-icon" class="wi weather-icon"></i>
     <div class="weather-details" id="weather-details">
       <p>Loading weather data...</p>
     </div>
@@ -85,7 +87,34 @@
         const windSpeed = obs.metric.windSpeed;
         const windDir = obs.winddir;
         const pressure = obs.metric.pressure;
-        const iconCode = obs.icon;
+        const condition = obs.condition.toLowerCase();
+
+        const weatherIcons = {
+          'clear': 'wi-day-sunny',
+          'cloudy': 'wi-cloudy',
+          'rain': 'wi-rain',
+          'snow': 'wi-snow',
+          'thunderstorm': 'wi-thunderstorm',
+          'fog': 'wi-fog',
+          'haze': 'wi-day-haze',
+          'partly cloudy': 'wi-day-cloudy',
+          'mostly cloudy': 'wi-cloudy',
+          'overcast': 'wi-cloudy',
+          'light rain': 'wi-showers',
+          'heavy rain': 'wi-rain',
+          'light snow': 'wi-snow',
+          'heavy snow': 'wi-snow-wind',
+          'sleet': 'wi-sleet',
+          'mist': 'wi-fog',
+          'drizzle': 'wi-sprinkle',
+          'scattered clouds': 'wi-day-cloudy',
+          'broken clouds': 'wi-cloudy',
+          'few clouds': 'wi-day-sunny-overcast'
+          // Add more mappings as needed
+        };
+
+        const iconClass = weatherIcons[condition] || 'wi-na';
+        document.getElementById('weather-icon').className = `wi ${iconClass} weather-icon`;
 
         document.getElementById('weather-details').innerHTML = `
           <p><strong>Temperature:</strong> ${temp}°C</p>
@@ -93,11 +122,6 @@
           <p><strong>Wind:</strong> ${windDir}° at ${windSpeed} km/h</p>
           <p><strong>Pressure:</strong> ${pressure} hPa</p>
         `;
-
-        // Map icon code to image URL
-        const iconUrl = `https://icons.wxug.com/i/c/v4/${iconCode}.svg`;
-        document.getElementById('weather-icon').src = iconUrl;
-        document.getElementById('weather-icon').alt = iconCode;
       } catch (error) {
         document.getElementById('weather-details').innerHTML = '<p>Failed to load weather data.</p>';
         console.error('Error fetching weather data:', error);
@@ -105,7 +129,6 @@
     }
 
     fetchWeather();
-    // Refresh weather data every 10 minutes
     setInterval(fetchWeather, 600000);
   </script>
 </body>
