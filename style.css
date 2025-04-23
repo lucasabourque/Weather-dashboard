@@ -1,14 +1,27 @@
 body {
-  font-family: sans-serif;
-  background: #eef;
+  font-family: Arial, sans-serif;
+  background-color: #f0f8ff;
   padding: 20px;
+  margin: 0;
 }
 
-.dashboard {
-  background: white;
+.weather-dashboard {
+  background-color: white;
   padding: 20px;
   border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
   max-width: 600px;
   margin: auto;
-  box-shadow: 0 0 10px #aaa;
+}
+
+h1 {
+  text-align: center;
+}
+
+#current-weather, #forecast {
+  margin-bottom: 20px;
+}
+
+strong {
+  font-weight: bold;
 }
