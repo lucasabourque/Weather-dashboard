@@ -7,130 +7,136 @@
   <style>
     body {
       margin: 0;
-      font-family: "Segoe UI", sans-serif;
-      background-color: #f4faff;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f1f9ff;
       color: #003366;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
       overflow: hidden;
-      height: 100vh;
     }
 
     header {
-      width: 100%;
-      background-color: #e3f2fd;
-      padding: 20px 0;
+      background-color: #005aa7;
+      color: white;
+      padding: 20px;
       text-align: center;
-      border-bottom: 2px solid #c2dfff;
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 2.5em;
+      font-size: 2.2em;
       font-weight: bold;
     }
 
     #time {
       font-size: 1.5em;
-      font-weight: bold;
-      margin-top: 10px;
+      margin-top: 5px;
     }
 
-    .forecast-container {
+    main {
+      padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
-      margin-top: 30px;
-      width: 90%;
-      max-width: 600px;
+      align-items: center;
+      height: calc(100vh - 130px);
       overflow-y: auto;
     }
 
     .forecast-day {
-      border-bottom: 1px solid #cccccc;
-      padding: 10px;
-      font-size: 1.3em;
+      background-color: white;
+      border: 2px solid #cde7f9;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 10px 0;
+      width: 90%;
+      max-width: 800px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .forecast-day h2 {
+      font-size: 1.4em;
+      margin-bottom: 10px;
+    }
+
+    .forecast-day img {
+      width: 64px;
+      height: 64px;
+      float: right;
+      margin-left: 10px;
+    }
+
+    .forecast-day p {
+      font-size: 1.1em;
       font-weight: bold;
     }
 
-    .forecast-text {
-      font-size: 1.2em;
-      font-weight: normal;
-      margin-top: 5px;
+    footer {
+      text-align: center;
+      font-size: 0.9em;
+      color: #666;
+      padding: 10px;
     }
 
-    #error {
-      font-size: 1.2em;
-      color: red;
-      margin-top: 20px;
-    }
   </style>
 </head>
 <body>
   <header>
-    <h1>Yarmouth, NS Weather</h1>
+    Yarmouth, NS Weather
     <div id="time">Loading time...</div>
   </header>
 
-  <div class="forecast-container" id="forecast">
-    <div id="error">Loading 7-day forecast...</div>
-  </div>
+  <main id="forecast">Loading...</main>
+
+  <footer>
+    Data from Environment Canada | Auto-refreshes every 30 minutes
+  </footer>
 
   <script>
+    const feedUrl = "https://weather.gc.ca/rss/weather/43.791_-65.967_e.xml";
+
     function updateTime() {
-      const now = new Date();
       const options = {
-        timeZone: "America/Halifax",
-        hour: "numeric",
-        minute: "numeric",
+        timeZone: 'America/Halifax',
+        hour: 'numeric',
+        minute: 'numeric',
         hour12: true
       };
-      const formattedTime = new Intl.DateTimeFormat("en-US", options).format(now);
-      document.getElementById("time").textContent = formattedTime;
+      document.getElementById('time').textContent = new Date().toLocaleTimeString('en-CA', options);
     }
 
-    async function loadForecast() {
-      const rssURL = "https://weather.gc.ca/rss/weather/43.791_-65.967_e.xml";
-      const proxyURL = "https://api.allorigins.win/get?url=" + encodeURIComponent(rssURL);
+    async function fetchForecast() {
+      const res = await fetch(feedUrl);
+      const text = await res.text();
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(text, "text/xml");
 
-      try {
-        const response = await fetch(proxyURL);
-        if (!response.ok) throw new Error("Failed to fetch.");
+      const items = xml.querySelectorAll("item");
+      const forecastContainer = document.getElementById("forecast");
+      forecastContainer.innerHTML = "";
 
-        const data = await response.json();
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(data.contents, "text/xml");
-        const items = xmlDoc.querySelectorAll("item");
+      let count = 0;
+      for (let i = 0; i < items.length && count < 7; i++) {
+        const title = items[i].querySelector("title").textContent;
+        const desc = items[i].querySelector("description").textContent;
+        const img = items[i].querySelector("description").innerHTML.match(/src="(.*?)"/);
+        const iconUrl = img ? img[1] : "";
 
-        const forecastContainer = document.getElementById("forecast");
-        forecastContainer.innerHTML = "";
-
-        for (let i = 0; i < 7 && i < items.length; i++) {
-          const title = items[i].querySelector("title").textContent;
-          const description = items[i].querySelector("description").textContent;
-
+        // Group day and night if possible
+        if (title.toLowerCase().includes("night") && forecastContainer.lastElementChild) {
+          // append to previous block
+          forecastContainer.lastElementChild.innerHTML += `<p><strong>${title}:</strong> ${desc}</p>`;
+        } else {
           const dayDiv = document.createElement("div");
           dayDiv.className = "forecast-day";
-          dayDiv.textContent = title;
-
-          const descDiv = document.createElement("div");
-          descDiv.className = "forecast-text";
-          descDiv.innerHTML = description;
-
+          dayDiv.innerHTML = `<h2>${title}</h2>
+                              ${iconUrl ? `<img src="${iconUrl}" alt="${title} icon">` : ""}
+                              <p>${desc}</p>`;
           forecastContainer.appendChild(dayDiv);
-          forecastContainer.appendChild(descDiv);
+          count++;
         }
-      } catch (err) {
-        document.getElementById("forecast").innerHTML =
-          "<div id='error'>Failed to load data.</div>";
       }
     }
 
     updateTime();
-    loadForecast();
-    setInterval(updateTime, 60 * 1000); // update time every minute
-    setInterval(loadForecast, 30 * 60 * 1000); // refresh every 30 minutes
+    fetchForecast();
+    setInterval(() => {
+      updateTime();
+      fetchForecast();
+    }, 1800000); // 30 min
   </script>
 </body>
 </html>
