@@ -1,111 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Yarmouth, NS Weather Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Yarmouth, NS Weather</title>
   <style>
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .spinner {
-      border: 4px solid #e5e7eb; border-top-color: #3b82f6;
-      border-radius: 50%; width: 2rem; height: 2rem;
-      animation: spin 1s linear infinite;
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f4faff;
+      color: #003366;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    header {
+      width: 100%;
+      background-color: #e3f2fd;
+      padding: 20px 0;
+      text-align: center;
+      border-bottom: 2px solid #c2dfff;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2.5em;
+      font-weight: bold;
+    }
+
+    #time {
+      font-size: 1.5em;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .forecast-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-top: 30px;
+      width: 90%;
+      max-width: 600px;
+      overflow-y: auto;
+    }
+
+    .forecast-day {
+      border-bottom: 1px solid #cccccc;
+      padding: 10px;
+      font-size: 1.3em;
+      font-weight: bold;
+    }
+
+    .forecast-text {
+      font-size: 1.2em;
+      font-weight: normal;
+      margin-top: 5px;
+    }
+
+    #error {
+      font-size: 1.2em;
+      color: red;
+      margin-top: 20px;
     }
   </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
-  <div class="max-w-3xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6 text-center">Yarmouth, NS Weather Dashboard</h1>
+<body>
+  <header>
+    <h1>Yarmouth, NS Weather</h1>
+    <div id="time">Loading time...</div>
+  </header>
 
-    <!-- Current Conditions -->
-    <div id="current-card" class="bg-white rounded-2xl shadow p-6 mb-8">
-      <h2 class="text-2xl font-semibold mb-4">Current Conditions</h2>
-      <div id="current-data" class="flex justify-center">
-        <div class="spinner"></div>
-      </div>
-    </div>
-
-    <!-- Forecast -->
-    <div id="forecast-cards" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-      <!-- Forecast cards go here -->
-    </div>
+  <div class="forecast-container" id="forecast">
+    <div id="error">Loading 7-day forecast...</div>
   </div>
 
   <script>
-    const API_KEY    = 'd8525791b85b407f925791b85b107f22';
-    const STATION_ID = 'IMUNIC376';
-    const PROXY      = 'https://thingproxy.freeboard.io/fetch/';
-    const BASE       = 'https://api.weather.com/v2/pws/';
-
-    function proxyUrl(path) {
-      const url = `${BASE}${path}?stationId=${STATION_ID}&format=json&units=m&apiKey=${API_KEY}`;
-      return PROXY + encodeURIComponent(url);
+    function updateTime() {
+      const now = new Date();
+      const options = {
+        timeZone: "America/Halifax",
+        hour: "numeric",
+        minute: "numeric",
+        hour12: true
+      };
+      const formattedTime = new Intl.DateTimeFormat("en-US", options).format(now);
+      document.getElementById("time").textContent = formattedTime;
     }
 
-    async function fetchData() {
-      // Show spinners
-      document.getElementById('current-data').innerHTML = '<div class="spinner"></div>';
-      document.getElementById('forecast-cards').innerHTML =
-        Array(4).fill().map(() =>
-          `<div class="bg-white rounded-2xl shadow p-4 flex justify-center"><div class="spinner"></div></div>`
-        ).join('');
+    async function loadForecast() {
+      const rssURL = "https://weather.gc.ca/rss/weather/43.791_-65.967_e.xml";
+      const proxyURL = "https://api.allorigins.win/get?url=" + encodeURIComponent(rssURL);
 
       try {
-        // Fetch current conditions
-        let res = await fetch(proxyUrl('observations/current'));
-        if (!res.ok) throw new Error('Current HTTP ' + res.status);
-        const cur = (await res.json()).observations[0];
+        const response = await fetch(proxyURL);
+        if (!response.ok) throw new Error("Failed to fetch.");
 
-        document.getElementById('current-data').innerHTML = `
-          <div class="grid grid-cols-2 gap-4 text-center">
-            <div>
-              <p class="text-xl font-bold">${cur.metric.temp} °C</p>
-              <p class="text-sm text-gray-500">Temperature</p>
-            </div>
-            <div>
-              <p class="text-xl font-bold">${cur.humidity}%</p>
-              <p class="text-sm text-gray-500">Humidity</p>
-            </div>
-            <div>
-              <p class="text-xl font-bold">${cur.metric.windSpeed} km/h</p>
-              <p class="text-sm text-gray-500">Wind Speed</p>
-            </div>
-            <div>
-              <p class="text-sm text-gray-500">${new Date(cur.obsTimeUtc).toLocaleTimeString()}</p>
-              <p class="text-sm text-gray-500">Last Update</p>
-            </div>
-          </div>`;
+        const data = await response.json();
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(data.contents, "text/xml");
+        const items = xmlDoc.querySelectorAll("item");
 
-        // Fetch 4‑day forecast
-        res = await fetch(proxyUrl('forecast/daily/5day'));
-        if (!res.ok) throw new Error('Forecast HTTP ' + res.status);
-        const days = (await res.json()).forecasts.slice(1, 5);
+        const forecastContainer = document.getElementById("forecast");
+        forecastContainer.innerHTML = "";
 
-        document.getElementById('forecast-cards').innerHTML = days.map(d => `
-          <div class="bg-white rounded-2xl shadow p-6 flex flex-col">
-            <h3 class="text-lg font-semibold mb-2">
-              ${new Date(d.fcst_valid_local).toLocaleDateString(undefined, {
-                weekday: 'long', month: 'short', day: 'numeric'
-              })}
-            </h3>
-            <p class="text-xl font-bold mb-1">High ${d.max_temp} °C</p>
-            <p class="text-xl font-bold mb-3 text-blue-600">Low ${d.min_temp} °C</p>
-            <p class="text-gray-600 flex-grow">${d.narrative}</p>
-          </div>
-        `).join('');
+        for (let i = 0; i < 7 && i < items.length; i++) {
+          const title = items[i].querySelector("title").textContent;
+          const description = items[i].querySelector("description").textContent;
 
+          const dayDiv = document.createElement("div");
+          dayDiv.className = "forecast-day";
+          dayDiv.textContent = title;
+
+          const descDiv = document.createElement("div");
+          descDiv.className = "forecast-text";
+          descDiv.innerHTML = description;
+
+          forecastContainer.appendChild(dayDiv);
+          forecastContainer.appendChild(descDiv);
+        }
       } catch (err) {
-        console.error(err);
-        document.getElementById('current-data').innerHTML =
-          `<p class="text-center text-gray-500">Data unavailable</p>`;
-        document.getElementById('forecast-cards').innerHTML = '';
+        document.getElementById("forecast").innerHTML =
+          "<div id='error'>Failed to load data.</div>";
       }
     }
 
-    // Initial load & auto‑refresh every 10 minutes
-    fetchData();
-    setInterval(fetchData, 10 * 60 * 1000);
+    updateTime();
+    loadForecast();
+    setInterval(updateTime, 60 * 1000); // update time every minute
+    setInterval(loadForecast, 30 * 60 * 1000); // refresh every 30 minutes
   </script>
 </body>
 </html>
