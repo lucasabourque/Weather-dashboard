@@ -51,13 +51,19 @@
       bottom: 44px;
       width: 100%;
       text-align: center;
-      font-size: 1rem;
+      font-size: 1.2rem;
       font-weight: 900;
       color: white;
       background-color: rgba(0, 0, 0, 0.6);
-      padding: 6px 10px;
+      padding: 6px 12px;
       z-index: 11;
-      text-shadow: 1px 1px 2px black;
+      text-shadow: 1px 1px 3px black;
+    }
+
+    .ticker-info span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .ticker {
@@ -67,7 +73,7 @@
       height: 40px;
       background-color: black;
       font-size: 1.8rem;
-      font-weight: 900;
+      font-weight: 1000;
       color: white;
       text-shadow: 1px 1px 2px black;
       overflow: hidden;
@@ -79,7 +85,6 @@
       white-space: nowrap;
       padding-left: 100%;
       animation: scrollTicker linear infinite;
-      animation-duration: 60s;
     }
 
     @keyframes scrollTicker {
@@ -112,7 +117,7 @@
   </div>
 
   <div class="ticker-info" id="ticker-info">
-    Above forecast is multi-model. Below in the ticker is sourced from weather.gc.ca
+    <span>ℹ️ Above forecast is multi-model. Below in the ticker is sourced from weather.gc.ca</span>
   </div>
 
   <div class="ticker">
@@ -122,15 +127,35 @@
   </div>
 
   <script>
-    const ecAlertTerms = [
-      "Rainfall Warning", "Snowfall Warning", "Wind Warning", "Heat Warning",
-      "Extreme Cold Warning", "Freezing Rain Warning", "Fog Advisory", "Blizzard Warning",
-      "Winter Storm Warning", "Snow Squall Warning", "Special Weather Statement",
-      "Severe Thunderstorm Watch", "Severe Thunderstorm Warning", "Tornado Watch",
-      "Tornado Warning", "Hurricane Watch", "Hurricane Warning", "Tropical Storm Watch",
-      "Tropical Storm Warning", "Wind Chill Warning", "Flash Freeze Warning",
-      "Arctic Outflow Warning", "Storm Surge Warning", "Storm Surge Watch"
-    ];
+    const ecAlertIcons = {
+      "Rainfall Warning": "🌧️",
+      "Snowfall Warning": "❄️",
+      "Wind Warning": "💨",
+      "Freezing Rain Warning": "🧊",
+      "Fog Advisory": "🌫️",
+      "Thunderstorm Warning": "⛈️",
+      "Severe Thunderstorm Warning": "⛈️",
+      "Severe Thunderstorm Watch": "🌩️",
+      "Tornado Warning": "🌪️",
+      "Tornado Watch": "🌪️",
+      "Hurricane Warning": "🌀",
+      "Hurricane Watch": "🌀",
+      "Heat Warning": "🔥",
+      "Extreme Cold Warning": "🥶",
+      "Blizzard Warning": "🌨️",
+      "Snow Squall Warning": "🌨️",
+      "Special Weather Statement": "⚠️",
+      "Winter Storm Warning": "❄️",
+      "Arctic Outflow Warning": "🌬️",
+      "Flash Freeze Warning": "🧊",
+      "Tropical Storm Warning": "🌀",
+      "Tropical Storm Watch": "🌀",
+      "Wind Chill Warning": "🥶",
+      "Storm Surge Warning": "🌊",
+      "Storm Surge Watch": "🌊"
+    };
+
+    const ecAlertTerms = Object.keys(ecAlertIcons);
 
     function updateTime() {
       const now = new Date();
@@ -162,12 +187,16 @@
 
       const alerts = data.items.map(item => {
         const title = item.title.trim();
-        const isExactMatch = ecAlertTerms.some(term =>
+        const matchedTerm = ecAlertTerms.find(term =>
           title.toLowerCase().startsWith(term.toLowerCase())
         );
-        return isExactMatch
-          ? `<span class="highlight">${title}</span>`
-          : title;
+
+        if (matchedTerm) {
+          const icon = ecAlertIcons[matchedTerm] || "⚠️";
+          return `<span class="highlight">${icon} ${title}</span>`;
+        }
+
+        return title;
       });
 
       ticker.innerHTML = alerts.length > 0
@@ -175,7 +204,7 @@
         : "No current alerts.";
 
       const baseLength = ticker.textContent.length;
-      const duration = Math.max(30, baseLength / 3);
+      const duration = Math.max(35, baseLength / 2.5);
       ticker.style.animationDuration = `${duration}s`;
     }
 
