@@ -60,6 +60,7 @@
       z-index: 10;
       opacity: 0;
       animation: fadein 2s ease-out forwards;
+      transition: background-color 0.5s ease;
     }
 
     marquee {
@@ -67,49 +68,8 @@
       display: block;
     }
 
-    .alert-badge {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background-color: rgba(255, 0, 0, 0.85);
-      color: white;
-      padding: 8px 16px;
-      font-size: 1.1rem;
-      font-weight: bold;
-      border-radius: 8px;
-      z-index: 15;
-      display: none;
-    }
-
-    .alert-badge.watch {
-      background-color: rgba(255, 255, 0, 0.85);
-      color: black;
-    }
-
     @keyframes fadein {
       to { opacity: 1; }
-    }
-
-    body.alert-warning {
-      border: 6px solid red;
-      animation: flash-red-border 1s infinite;
-    }
-
-    body.alert-watch {
-      border: 6px solid yellow;
-      animation: flash-yellow-border 1s infinite;
-    }
-
-    @keyframes flash-red-border {
-      0% { border-color: red; }
-      50% { border-color: transparent; }
-      100% { border-color: red; }
-    }
-
-    @keyframes flash-yellow-border {
-      0% { border-color: yellow; }
-      50% { border-color: transparent; }
-      100% { border-color: yellow; }
     }
   </style>
 </head>
@@ -125,13 +85,11 @@
     <span class="datetime" id="datetime"></span>
   </div>
 
-  <div class="ticker">
+  <div class="ticker" id="ticker">
     <marquee behavior="scroll" direction="left" scrollamount="7" id="ticker-text">
       Loading alerts...
     </marquee>
   </div>
-
-  <div id="alert-badge" class="alert-badge"></div>
 
   <script>
     const alertEmojis = {
@@ -148,11 +106,25 @@
     };
 
     const forecastEmojis = {
-      "Sunny": "☀️", "Mainly Sunny": "🌤️", "Partly Cloudy": "⛅", "Cloudy": "☁️",
-      "A mix of sun and cloud": "🌥️", "Periods of rain": "🌦️", "Rain": "🌧️",
-      "Rain and wind": "🌧️💨", "Showers": "🌦️", "Thunderstorms": "⛈️", "Snow": "❄️",
-      "Flurries": "🌨️", "Fog": "🌫️", "Drizzle": "🌦️", "Freezing Rain": "🧊",
-      "Hail": "🌨️", "Windy": "💨", "Cold": "🥶", "Hot": "🔥"
+      "Sunny": ["☀️", "🌙"],
+      "Mainly Sunny": ["🌤️", "🌙"],
+      "Partly Cloudy": ["⛅", "🌙"],
+      "Cloudy": ["☁️", "☁️"],
+      "A mix of sun and cloud": ["🌥️", "🌥️"],
+      "Periods of rain": ["🌦️☀️", "🌦️🌙"],
+      "Rain": ["🌧️", "🌧️"],
+      "Rain and wind": ["🌧️💨", "🌧️💨"],
+      "Showers": ["🌦️", "🌧️🌙"],
+      "Thunderstorms": ["⛈️", "⛈️"],
+      "Snow": ["❄️", "❄️"],
+      "Flurries": ["🌨️", "🌨️"],
+      "Fog": ["🌫️", "🌫️"],
+      "Drizzle": ["🌦️", "🌦️🌙"],
+      "Freezing Rain": ["🧊", "🧊"],
+      "Hail": ["🌨️", "🌨️"],
+      "Windy": ["💨", "💨"],
+      "Cold": ["🥶", "🥶"],
+      "Hot": ["🔥", "🔥"]
     };
 
     function updateTime() {
@@ -177,41 +149,41 @@
 
     function showRSS(data) {
       if (!data || !data.items) {
-        document.getElementById('ticker-text').textContent = "No alerts available.";
+        document.getElementById("ticker-text").textContent = "No alerts available.";
+        document.getElementById("ticker").style.backgroundColor = "black";
         return;
       }
 
       const ticker = document.getElementById('ticker-text');
-      const body = document.body;
-      const badge = document.getElementById("alert-badge");
+      const bar = document.getElementById('ticker');
       let alerts = [];
 
       data.items.forEach(item => {
         let matched = false;
+
+        // Handle alerts
         for (let alert in alertEmojis) {
           if (item.title.includes(alert)) {
             alerts.push(`${alertEmojis[alert]} ${item.title}`);
             matched = true;
-            // Badge + red/yellow border logic
+
+            // Check for weather-related alert and color background
             if (/Warning/i.test(item.title) && /(Rain|Snow|Storm|Wind|Fog|Cold|Heat|Thunder|Tornado|Hurricane|Freezing|Drizzle)/i.test(item.title)) {
-              body.classList.add('alert-warning');
-              badge.textContent = item.title;
-              badge.classList.remove("watch");
-              badge.style.display = "block";
+              bar.style.backgroundColor = "rgba(255, 0, 0, 0.8)";
             } else if (/Watch/i.test(item.title) && /(Rain|Snow|Storm|Wind|Fog|Cold|Heat|Thunder|Tornado|Hurricane|Freezing|Drizzle)/i.test(item.title)) {
-              body.classList.add('alert-watch');
-              badge.textContent = item.title;
-              badge.classList.add("watch");
-              badge.style.display = "block";
+              bar.style.backgroundColor = "rgba(255, 255, 0, 0.8)";
             }
             break;
           }
         }
 
+        // Handle forecasts
         if (!matched) {
           for (let term in forecastEmojis) {
             if (item.title.includes(term)) {
-              alerts.push(`${forecastEmojis[term]} ${item.title}`);
+              const isNight = /night/i.test(item.title);
+              const emoji = forecastEmojis[term][isNight ? 1 : 0];
+              alerts.push(`${emoji} ${item.title}`);
               break;
             }
           }
