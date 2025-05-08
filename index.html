@@ -13,18 +13,13 @@
       overflow: hidden;
       background: black;
     }
-
     .background {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      border: none;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 0; border: none;
       pointer-events: none;
     }
-
     .top-overlay {
       position: absolute;
       top: 20px;
@@ -40,12 +35,10 @@
       align-items: center;
       gap: 16px;
     }
-
     .datetime {
       font-size: 1.4rem;
       font-weight: normal;
     }
-
     .ticker {
       position: absolute;
       bottom: 0;
@@ -60,45 +53,51 @@
       opacity: 0;
       animation: fadein 2s ease-out forwards;
     }
-
     marquee {
       width: 100%;
       display: block;
     }
-
-    @keyframes fadein {
-      to { opacity: 1; }
-    }
+    @keyframes fadein { to { opacity: 1; } }
   </style>
 </head>
 <body>
-
-  <iframe class="background"
-    src="https://kitchen.screenfeed.com/feed/4n1sf2ms6qe684xkzs75pw1d5v.html"
-    allowfullscreen>
-  </iframe>
-
+  <iframe class="background" src="https://kitchen.screenfeed.com/feed/4n1sf2ms6qe684xkzs75pw1d5v.html" allowfullscreen></iframe>
   <div class="top-overlay">
     📍 YARMOUTH, NS
     <span class="datetime" id="datetime"></span>
   </div>
-
   <div class="ticker" id="ticker">
     <marquee behavior="scroll" direction="left" scrollamount="7" id="ticker-text">
       Loading alerts...
     </marquee>
   </div>
-
   <script>
+    const emojiMatch = {
+      rain: "🌧️", snow: "❄️", flurries: "🌨️", drizzle: "🌦️", fog: "🌫️",
+      thunder: "⛈️", shower: "🌦️", sunny: "☀️", cloud: "☁️", clear: "🌙",
+      mix: "🌥️", windy: "💨", cold: "🥶", hot: "🔥", freezing: "🧊", hail: "🧊"
+    };
+
+    function forecastPrefix(title) {
+      if (/night|tonight/i.test(title)) return "🌙";
+      return "☀️";
+    }
+
+    function forecastIcon(text) {
+      for (let key in emojiMatch) {
+        if (new RegExp("\\b" + key + "\\b", "i").test(text)) {
+          return emojiMatch[key];
+        }
+      }
+      return "";
+    }
+
     function updateTime() {
       const now = new Date();
       const options = {
         timeZone: "America/Halifax",
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit'
+        month: 'long', day: 'numeric', year: 'numeric',
+        hour: 'numeric', minute: '2-digit'
       };
       document.getElementById('datetime').textContent =
         new Intl.DateTimeFormat('en-CA', options).format(now);
@@ -126,13 +125,14 @@
 
     function fetchAndDisplayRSS() {
       const script = document.createElement('script');
-      script.src = "https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml&callback=showRSS";
+      script.src = "https://api.rss2json.com/v1/api.json?rss_url=" +
+        encodeURIComponent("https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml") +
+        "&callback=showRSS&_=" + new Date().getTime();
       document.body.appendChild(script);
     }
 
     function showRSS(data) {
       const ticker = document.getElementById('ticker-text');
-      const bar = document.getElementById('ticker');
       let alerts = [];
 
       if (!data || !data.items) {
@@ -141,18 +141,24 @@
       }
 
       data.items.forEach(item => {
-        alerts.push(item.title);
-        const conditions = extractConditions(item.description);
-        if (conditions) alerts.push(conditions);
+        const title = item.title;
+        const desc = item.description;
+        if (/°C/.test(desc) && /Wind:/i.test(desc)) {
+          alerts.push(extractConditions(desc));
+        } else if (/(Today|Tonight|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/i.test(title)) {
+          alerts.push(`${forecastPrefix(title)}${forecastIcon(title)} ${title}`);
+        } else {
+          alerts.push(title);
+        }
       });
 
       ticker.textContent = alerts.length > 0 ? alerts.join(" • ") : "No current alerts.";
     }
 
     updateTime();
-    setInterval(updateTime, 60000);               // Clock every 1 minute
+    setInterval(updateTime, 60000); // clock every 1 min
     fetchAndDisplayRSS();
-    setInterval(fetchAndDisplayRSS, 1800000);     // RSS every 30 minutes
+    setInterval(fetchAndDisplayRSS, 1800000); // refresh RSS every 30 min
   </script>
 </body>
 </html>
