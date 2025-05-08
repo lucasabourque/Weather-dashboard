@@ -33,29 +33,29 @@
       color: white;
       padding: 12px 24px;
       font-weight: bold;
-      font-size: 2rem;
+      font-size: 1.8rem;
       border-radius: 10px;
       z-index: 10;
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
     }
 
-    .datetime {
-      font-size: 1.4rem;
-      font-weight: normal;
+    .top-overlay .datetime {
+      font-size: 1.1rem;
+      font-weight: bold;
     }
 
     .ticker-info {
       position: absolute;
-      bottom: 44px;
+      bottom: 48px;
       width: 100%;
       text-align: center;
       font-size: 1.4rem;
-      font-weight: 900;
+      font-weight: 1000;
       color: white;
       background-color: rgba(0, 0, 0, 0.6);
-      padding: 8px 14px;
+      padding: 10px 14px;
       z-index: 11;
       text-shadow: 1px 1px 3px black;
     }
@@ -79,12 +79,12 @@
       position: absolute;
       bottom: 0;
       width: 100%;
-      height: 40px;
+      height: 50px;
       background-color: black;
-      font-size: 1.8rem;
+      font-size: 2rem;
       font-weight: 1000;
       color: white;
-      text-shadow: 1px 1px 2px black;
+      text-shadow: 2px 2px 4px black;
       overflow: hidden;
       z-index: 10;
     }
@@ -117,12 +117,12 @@
   </iframe>
 
   <div class="top-overlay">
-    📍 YARMOUTH, NS
+    📍 <strong>YARMOUTH, NS</strong>
     <span class="datetime" id="datetime"></span>
   </div>
 
   <div class="ticker-info" id="ticker-info">
-    <span>ℹ️ Above forecast is multi-model. Below in the ticker is sourced from weather.gc.ca</span>
+    <span>ℹ️ Multi-model forecast above. Alerts and forecast below are provided by Environment Canada.</span>
   </div>
 
   <div class="ticker">
@@ -191,12 +191,9 @@
 
         if (matchedTerm) {
           const icon = ecAlertIcons[matchedTerm] || "⚠️";
-
-          // Check for weather keywords to trigger pulse
           if (triggerKeywords.some(word => title.toLowerCase().includes(word))) {
             shouldPulse = true;
           }
-
           return `<span class="highlight">${icon} ${title}</span>`;
         }
 
@@ -207,12 +204,10 @@
         ? alerts.join(" • ")
         : "No current alerts.";
 
-      // Set ticker scroll speed
       const baseLength = ticker.textContent.length;
       const duration = Math.max(35, baseLength / 2.5);
       ticker.style.animationDuration = `${duration}s`;
 
-      // Apply pulsing class if needed
       infoBar.classList.toggle("pulse", shouldPulse);
     }
 
