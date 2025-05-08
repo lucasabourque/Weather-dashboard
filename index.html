@@ -106,20 +106,21 @@
     };
 
     const forecastEmojis = {
-      "Sunny": ["☀️", "🌙"],
-      "Mainly Sunny": ["🌤️", "🌙"],
-      "Partly Cloudy": ["⛅", "🌙"],
+      "Sunny": ["☀️", "☀️"],
+      "Clear": ["🌙", "🌙"],
+      "Mainly Sunny": ["🌤️", "☁️"],
+      "Partly Cloudy": ["⛅", "☁️"],
       "Cloudy": ["☁️", "☁️"],
-      "A mix of sun and cloud": ["🌥️", "🌥️"],
-      "Periods of rain": ["🌦️☀️", "🌦️🌙"],
+      "A mix of sun and cloud": ["🌥️", "☁️"],
+      "Periods of rain": ["🌦️", "🌧️"],
       "Rain": ["🌧️", "🌧️"],
       "Rain and wind": ["🌧️💨", "🌧️💨"],
-      "Showers": ["🌦️", "🌧️🌙"],
+      "Showers": ["🌦️", "🌧️"],
       "Thunderstorms": ["⛈️", "⛈️"],
       "Snow": ["❄️", "❄️"],
       "Flurries": ["🌨️", "🌨️"],
       "Fog": ["🌫️", "🌫️"],
-      "Drizzle": ["🌦️", "🌦️🌙"],
+      "Drizzle": ["🌦️", "🌧️"],
       "Freezing Rain": ["🧊", "🧊"],
       "Hail": ["🌨️", "🌨️"],
       "Windy": ["💨", "💨"],
@@ -161,13 +162,11 @@
       data.items.forEach(item => {
         let matched = false;
 
-        // Handle alerts
         for (let alert in alertEmojis) {
           if (item.title.includes(alert)) {
             alerts.push(`${alertEmojis[alert]} ${item.title}`);
             matched = true;
 
-            // Check for weather-related alert and color background
             if (/Warning/i.test(item.title) && /(Rain|Snow|Storm|Wind|Fog|Cold|Heat|Thunder|Tornado|Hurricane|Freezing|Drizzle)/i.test(item.title)) {
               bar.style.backgroundColor = "rgba(255, 0, 0, 0.8)";
             } else if (/Watch/i.test(item.title) && /(Rain|Snow|Storm|Wind|Fog|Cold|Heat|Thunder|Tornado|Hurricane|Freezing|Drizzle)/i.test(item.title)) {
@@ -177,7 +176,6 @@
           }
         }
 
-        // Handle forecasts
         if (!matched) {
           for (let term in forecastEmojis) {
             if (item.title.includes(term)) {
