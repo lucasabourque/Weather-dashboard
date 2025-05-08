@@ -53,8 +53,11 @@
       text-align: center;
       font-size: 0.85rem;
       font-weight: bold;
+      color: white;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 4px 8px;
       z-index: 11;
-      transition: color 0.3s ease;
+      text-shadow: 1px 1px 2px black;
     }
 
     .ticker {
@@ -80,12 +83,8 @@
     }
 
     @keyframes scrollTicker {
-      0% {
-        transform: translateX(0%);
-      }
-      100% {
-        transform: translateX(-100%);
-      }
+      0% { transform: translateX(0%); }
+      100% { transform: translateX(-100%); }
     }
 
     .highlight {
@@ -180,20 +179,9 @@
       ticker.style.animationDuration = `${duration}s`;
     }
 
-    function adjustTickerInfoColor() {
-      const bg = window.getComputedStyle(document.body).backgroundColor;
-      const rgb = bg.match(/\d+/g);
-      const brightness = rgb
-        ? (parseInt(rgb[0]) * 299 + parseInt(rgb[1]) * 587 + parseInt(rgb[2]) * 114) / 1000
-        : 0;
-      const textColor = brightness > 128 ? "black" : "white";
-      document.getElementById("ticker-info").style.color = textColor;
-    }
-
     updateTime();
     setInterval(updateTime, 60000);
     fetchAndDisplayRSS();
-    adjustTickerInfoColor();
   </script>
 </body>
 </html>
