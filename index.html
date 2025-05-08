@@ -140,7 +140,7 @@
 
     function fetchAndDisplayRSS() {
       const script = document.createElement('script');
-      script.src = "https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml&callback=showRSS";
+      script.src = "https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml&callback=showRSS&_=" + Date.now();
       document.body.appendChild(script);
     }
 
@@ -169,6 +169,7 @@
     updateTime();
     setInterval(updateTime, 60000);
     fetchAndDisplayRSS();
+    setInterval(fetchAndDisplayRSS, 300000); // auto-refresh every 5 min
   </script>
 </body>
 </html>
