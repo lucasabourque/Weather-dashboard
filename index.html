@@ -116,19 +116,6 @@
   </div>
 
   <script>
-    const alertEmojis = {
-      "Rainfall Warning": "🌧️", "Snowfall Warning": "❄️", "Wind Warning": "💨",
-      "Heat Warning": "🔥", "Extreme Cold Warning": "🥶", "Freezing Rain Warning": "🧊",
-      "Fog Advisory": "🌫️", "Thunderstorm Warning": "⛈️", "Tornado Warning": "🌪️",
-      "Hurricane Warning": "🌀", "Blizzard Warning": "🌨️", "Frost Advisory": "🧊",
-      "Dust Storm Warning": "🌬️", "Flash Freeze Warning": "🧊", "Coastal Flood Warning": "🌊",
-      "Tsunami Warning": "🌊", "Winter Storm Warning": "❄️", "Snow Squall Warning": "🌨️",
-      "Freezing Drizzle Advisory": "🧊", "Arctic Outflow Warning": "🌬️",
-      "Severe Thunderstorm Watch": "🌩️", "Severe Thunderstorm Warning": "🌩️",
-      "Tornado Watch": "🌪️", "Hurricane Watch": "🌀", "Tropical Storm Watch": "🌀",
-      "Tropical Storm Warning": "🌀", "Wind Chill Warning": "🥶", "Extreme Wind Warning": "💨"
-    };
-
     function updateTime() {
       const now = new Date();
       const options = {
@@ -159,15 +146,13 @@
       let alerts = [];
 
       data.items.forEach(item => {
-        const title = item.title;
-        const isAlert = /(warning|watch|statement)/i.test(title);
-        const isForecast = /forecast/i.test(title);
+        const title = item.title.trim();
+        const isHighlight = /(warning|watch|statement)/i.test(title);
+        const displayText = isHighlight
+          ? `<span class="highlight">${title}</span>`
+          : title;
 
-        if (isAlert) {
-          alerts.push(`<span class="highlight">${title}</span>`);
-        } else if (isForecast) {
-          alerts.push(title);
-        }
+        alerts.push(displayText);
       });
 
       ticker.innerHTML = alerts.length > 0
