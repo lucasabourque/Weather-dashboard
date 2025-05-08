@@ -61,12 +61,6 @@
       text-shadow: 1px 1px 2px black;
     }
 
-    .ticker-info span {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
     .ticker {
       position: absolute;
       bottom: 0;
@@ -92,22 +86,6 @@
       0% { transform: translateX(0%); }
       100% { transform: translateX(-100%); }
     }
-
-    .highlight {
-      background-color: yellow;
-      color: red;
-      padding: 0 6px;
-      border-radius: 4px;
-    }
-
-    @keyframes flash-alert {
-      0%, 100% { background-color: black; }
-      50% { background-color: red; }
-    }
-
-    .flash {
-      animation: flash-alert 1s infinite;
-    }
   </style>
 </head>
 <body>
@@ -127,39 +105,25 @@
   </div>
 
   <div class="ticker">
-    <div class="ticker-content" id="ticker-text">
-      Loading alerts...
-    </div>
+    <div class="ticker-content" id="ticker-text">Loading...</div>
   </div>
 
   <script>
-    const ecAlertIcons = {
-      "Rainfall Warning": "🌧️", "Snowfall Warning": "❄️", "Wind Warning": "💨",
-      "Freezing Rain Warning": "🧊", "Fog Advisory": "🌫️", "Thunderstorm Warning": "⛈️",
-      "Severe Thunderstorm Warning": "⛈️", "Severe Thunderstorm Watch": "🌩️",
-      "Tornado Warning": "🌪️", "Tornado Watch": "🌪️", "Hurricane Warning": "🌀",
-      "Hurricane Watch": "🌀", "Heat Warning": "🔥", "Extreme Cold Warning": "🥶",
-      "Blizzard Warning": "🌨️", "Snow Squall Warning": "🌨️", "Special Weather Statement": "⚠️",
-      "Winter Storm Warning": "❄️", "Arctic Outflow Warning": "🌬️",
-      "Flash Freeze Warning": "🧊", "Tropical Storm Warning": "🌀",
-      "Tropical Storm Watch": "🌀", "Wind Chill Warning": "🥶",
-      "Storm Surge Warning": "🌊", "Storm Surge Watch": "🌊"
-    };
-
-    const ecAlertTerms = Object.keys(ecAlertIcons);
-
     async function updateTicker() {
       const ticker = document.getElementById("ticker-text");
 
+      // Weather Underground data
       const wuData = await fetch("https://weather.lucasabourque.workers.dev/")
         .then(res => res.json())
         .catch(() => []);
 
+      const wuIntro = "LIVE WEATHER CONDITIONS AROUND YARMOUTH:";
       const wuEntries = wuData.map(entry => {
         const { name, temp, humidity, wind_kph } = entry;
         return `📍 ${name}: ${temp}°C, Wind ${wind_kph} km/h, Humidity ${humidity}%`;
       });
 
+      // Environment Canada data (filtered to exclude current conditions)
       const ecData = await fetch("https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml")
         .then(res => res.json())
         .then(data => data.items || [])
@@ -168,33 +132,29 @@
       const ecEntries = ecData
         .filter(item => {
           const title = item.title.toLowerCase();
-          return (
-            title.includes("warning") ||
-            title.includes("watch") ||
-            /(today|tonight|monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i.test(title)
+          const description = item.description.toLowerCase();
+          return !(
+            title.includes("current conditions") ||
+            title.includes("observed at") ||
+            description.includes("humidity:") ||
+            description.includes("wind:") ||
+            description.includes("dewpoint:") ||
+            description.includes("pressure:")
           );
         })
         .map(item => {
           const title = item.title.trim();
           const description = item.description.replace(/<[^>]+>/g, '').trim();
-          const text = `${title}: ${description}`.replace(/\.\s*/g, ". ").replace(/\s+/g, " ");
-          const matchedTerm = ecAlertTerms.find(term => title.toLowerCase().startsWith(term.toLowerCase()));
-
-          if (matchedTerm) {
-            const icon = ecAlertIcons[matchedTerm] || "⚠️";
-            return `<span class="highlight flash">${icon} ${text}</span>`;
-          }
-
-          return `ℹ️ ${text}`;
+          return `${title}: ${description}`;
         });
 
-      const combined = [...wuEntries, ...ecEntries];
+      const combined = [wuIntro, ...wuEntries, ...ecEntries];
 
-      ticker.innerHTML = combined.length > 0
+      ticker.innerHTML = combined.length
         ? combined.join(" •• ")
         : "No weather data available.";
 
-      const duration = Math.max(18, ticker.textContent.length / 1.8); // Faster but readable
+      const duration = Math.max(3, ticker.textContent.length / 6);
       ticker.style.animationDuration = `${duration}s`;
     }
 
@@ -202,14 +162,14 @@
       const now = new Date();
       const options = {
         timeZone: "America/Halifax",
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit'
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
       };
-      document.getElementById('datetime').textContent =
-        new Intl.DateTimeFormat('en-CA', options).format(now);
+      document.getElementById("datetime").textContent =
+        new Intl.DateTimeFormat("en-CA", options).format(now);
     }
 
     updateTime();
