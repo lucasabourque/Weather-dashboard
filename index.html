@@ -23,7 +23,6 @@
       z-index: 0;
       border: none;
       pointer-events: none;
-      will-change: transform;
     }
 
     .top-overlay {
@@ -64,16 +63,31 @@
       position: absolute;
       bottom: 0;
       width: 100%;
+      height: 40px;
       background-color: black;
-      padding: 6px 0;
       font-size: 1.8rem;
       font-weight: 900;
       color: white;
       text-shadow: 1px 1px 2px black;
+      overflow: hidden;
       z-index: 10;
-      opacity: 0;
-      animation: fadein 2s ease-out forwards;
-      transition: background-color 0.5s ease;
+    }
+
+    .ticker-content {
+      display: inline-block;
+      white-space: nowrap;
+      padding-left: 100%;
+      animation: scrollTicker linear infinite;
+      animation-duration: 60s;
+    }
+
+    @keyframes scrollTicker {
+      0% {
+        transform: translateX(0%);
+      }
+      100% {
+        transform: translateX(-100%);
+      }
     }
 
     .highlight {
@@ -81,11 +95,6 @@
       color: red;
       padding: 0 6px;
       border-radius: 4px;
-    }
-
-    marquee {
-      width: 100%;
-      display: block;
     }
 
     @keyframes fadein {
@@ -109,10 +118,10 @@
     Above forecast is multi-model. Below in the ticker is sourced from weather.gc.ca
   </div>
 
-  <div class="ticker" id="ticker">
-    <marquee behavior="scroll" direction="left" scrollamount="7" id="ticker-text">
+  <div class="ticker">
+    <div class="ticker-content" id="ticker-text">
       Loading alerts...
-    </marquee>
+    </div>
   </div>
 
   <script>
@@ -150,13 +159,15 @@
     function showRSS(data) {
       const ticker = document.getElementById('ticker-text');
       if (!data || !data.items) {
-        ticker.textContent = "No alerts available.";
+        ticker.innerHTML = "No alerts available.";
         return;
       }
 
       const alerts = data.items.map(item => {
         const title = item.title.trim();
-        const isExactMatch = ecAlertTerms.some(term => title.toLowerCase().startsWith(term.toLowerCase()));
+        const isExactMatch = ecAlertTerms.some(term =>
+          title.toLowerCase().startsWith(term.toLowerCase())
+        );
         return isExactMatch
           ? `<span class="highlight">${title}</span>`
           : title;
@@ -165,6 +176,10 @@
       ticker.innerHTML = alerts.length > 0
         ? alerts.join(" • ")
         : "No current alerts.";
+
+      // Adjust animation speed based on text length
+      const duration = Math.max(30, ticker.textContent.length / 3); // roughly 3 chars/sec
+      ticker.style.animationDuration = `${duration}s`;
     }
 
     updateTime();
