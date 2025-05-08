@@ -177,7 +177,7 @@
       let alerts = [];
 
       data.items.forEach(item => {
-        if (item.title.includes("Yarmouth") && /°C/.test(item.description)) {
+        if (/°C/.test(item.description) && /Wind:/i.test(item.description)) {
           alerts.push(extractConditions(item.description));
           return;
         }
