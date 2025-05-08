@@ -185,7 +185,7 @@
         ? combined.join(" •• ")
         : "No weather data available.";
 
-      const duration = Math.max(35, ticker.textContent.length / 2.5);
+      const duration = Math.max(20, ticker.textContent.length / 2.0); // FASTER SCROLL SPEED
       ticker.style.animationDuration = `${duration}s`;
     }
 
