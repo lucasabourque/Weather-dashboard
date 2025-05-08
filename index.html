@@ -8,34 +8,20 @@
     html, body {
       margin: 0;
       padding: 0;
-      width: 100%;
       height: 100%;
-      background: black;
-      overflow: hidden;
       font-family: Arial, sans-serif;
+      overflow: hidden;
+      background: black;
     }
 
-    .slideshow {
+    .background {
       position: absolute;
       top: 0;
       left: 0;
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
       z-index: 0;
-    }
-
-    .slideshow img {
-      position: absolute;
-      width: 100vw;
-      height: 100vh;
-      object-fit: cover;
-      opacity: 0;
-      transition: opacity 1s ease-in-out;
-    }
-
-    .slideshow img.active {
-      opacity: 1;
-      z-index: 1;
+      border: none;
     }
 
     .top-overlay {
@@ -72,28 +58,26 @@
 
     marquee {
       width: 100%;
+      display: inline-block;
     }
   </style>
 </head>
 <body>
 
-  <!-- Rotating Background Images (16:9 Optimized) -->
-  <div class="slideshow">
-    <img src="http://direct.screenfeed.com/asset/7nmrmskm7qm2hmgewvpehw6j4j/16.jpg" class="active" />
-    <img src="http://direct.screenfeed.com/asset/1vyt97vbrapy34wgm51en8rxqh/16.jpg" />
-    <img src="http://direct.screenfeed.com/asset/7yc6vhckjdsasmx4wt5dzwzg1c/16.jpg" />
-    <img src="http://direct.screenfeed.com/asset/535jm5vag2bjr4d4dd34g2a21c/16.jpg" />
-    <img src="http://direct.screenfeed.com/asset/516dqxn54dypjmcx9ew3hvy30z/16.jpg" />
-    <img src="http://direct.screenfeed.com/asset/2csq345frkntzmkm2ax470q5dk/1.jpg" />
-  </div>
+  <!-- Background Weather Display (HTTPS!) -->
+  <iframe
+    class="background"
+    src="https://kitchen.screenfeed.com/feed/4n1sf2ms6qe684xkzs75pw1d5v.html"
+    allowfullscreen
+  ></iframe>
 
-  <!-- Time + Location -->
+  <!-- Top Time and Location -->
   <div class="top-overlay">
     📍 YARMOUTH, NS
     <span class="datetime" id="datetime"></span>
   </div>
 
-  <!-- Weather Alerts Ticker -->
+  <!-- Scrolling Weather Alerts -->
   <div class="ticker">
     <marquee behavior="scroll" direction="left" scrollamount="5" id="ticker-text">
       Loading alerts...
@@ -142,20 +126,9 @@
       document.getElementById('ticker-text').textContent = text || "No current alerts.";
     }
 
-    function rotateImages() {
-      const images = document.querySelectorAll(".slideshow img");
-      let index = 0;
-      setInterval(() => {
-        images[index].classList.remove("active");
-        index = (index + 1) % images.length;
-        images[index].classList.add("active");
-      }, 20000); // 20 seconds
-    }
-
     updateTime();
     setInterval(updateTime, 60000);
     fetchAndDisplayRSS();
-    rotateImages();
   </script>
 </body>
 </html>
