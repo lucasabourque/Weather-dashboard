@@ -22,6 +22,8 @@
       height: 100%;
       z-index: 0;
       border: none;
+      pointer-events: none;
+      will-change: transform;
     }
 
     .top-overlay {
@@ -56,37 +58,103 @@
       color: white;
       text-shadow: 1px 1px 2px black;
       z-index: 10;
+      opacity: 0;
+      animation: fadein 2s ease-out forwards;
     }
 
     marquee {
       width: 100%;
       display: block;
     }
+
+    .alert-badge {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: rgba(255, 0, 0, 0.85);
+      color: white;
+      padding: 8px 16px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      z-index: 15;
+      display: none;
+    }
+
+    .alert-badge.watch {
+      background-color: rgba(255, 255, 0, 0.85);
+      color: black;
+    }
+
+    @keyframes fadein {
+      to { opacity: 1; }
+    }
+
+    body.alert-warning {
+      border: 6px solid red;
+      animation: flash-red-border 1s infinite;
+    }
+
+    body.alert-watch {
+      border: 6px solid yellow;
+      animation: flash-yellow-border 1s infinite;
+    }
+
+    @keyframes flash-red-border {
+      0% { border-color: red; }
+      50% { border-color: transparent; }
+      100% { border-color: red; }
+    }
+
+    @keyframes flash-yellow-border {
+      0% { border-color: yellow; }
+      50% { border-color: transparent; }
+      100% { border-color: yellow; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- Background Weather Display -->
-  <iframe
-    class="background"
+  <iframe class="background"
     src="https://kitchen.screenfeed.com/feed/4n1sf2ms6qe684xkzs75pw1d5v.html"
-    allowfullscreen
-  ></iframe>
+    allowfullscreen>
+  </iframe>
 
-  <!-- Top Time and Location -->
   <div class="top-overlay">
     📍 YARMOUTH, NS
     <span class="datetime" id="datetime"></span>
   </div>
 
-  <!-- Scrolling Ticker -->
   <div class="ticker">
     <marquee behavior="scroll" direction="left" scrollamount="7" id="ticker-text">
       Loading alerts...
     </marquee>
   </div>
 
+  <div id="alert-badge" class="alert-badge"></div>
+
   <script>
+    const alertEmojis = {
+      "Rainfall Warning": "🌧️", "Snowfall Warning": "❄️", "Wind Warning": "💨",
+      "Heat Warning": "🔥", "Extreme Cold Warning": "🥶", "Freezing Rain Warning": "🧊",
+      "Fog Advisory": "🌫️", "Thunderstorm Warning": "⛈️", "Tornado Warning": "🌪️",
+      "Hurricane Warning": "🌀", "Blizzard Warning": "🌨️", "Frost Advisory": "🧊",
+      "Dust Storm Warning": "🌬️", "Flash Freeze Warning": "🧊", "Coastal Flood Warning": "🌊",
+      "Tsunami Warning": "🌊", "Winter Storm Warning": "❄️", "Snow Squall Warning": "🌨️",
+      "Freezing Drizzle Advisory": "🧊", "Arctic Outflow Warning": "🌬️",
+      "Severe Thunderstorm Watch": "🌩️", "Severe Thunderstorm Warning": "🌩️",
+      "Tornado Watch": "🌪️", "Hurricane Watch": "🌀", "Tropical Storm Watch": "🌀",
+      "Tropical Storm Warning": "🌀", "Wind Chill Warning": "🥶", "Extreme Wind Warning": "💨"
+    };
+
+    const forecastEmojis = {
+      "Sunny": "☀️", "Mainly Sunny": "🌤️", "Partly Cloudy": "⛅", "Cloudy": "☁️",
+      "A mix of sun and cloud": "🌥️", "Periods of rain": "🌦️", "Rain": "🌧️",
+      "Rain and wind": "🌧️💨", "Showers": "🌦️", "Thunderstorms": "⛈️", "Snow": "❄️",
+      "Flurries": "🌨️", "Fog": "🌫️", "Drizzle": "🌦️", "Freezing Rain": "🧊",
+      "Hail": "🌨️", "Windy": "💨", "Cold": "🥶", "Hot": "🔥"
+    };
+
     function updateTime() {
       const now = new Date();
       const options = {
@@ -101,14 +169,6 @@
         new Intl.DateTimeFormat('en-CA', options).format(now);
     }
 
-    function getIconForAlert(text) {
-      if (/warning/i.test(text)) return '⚠️';
-      if (/watch/i.test(text)) return '🔍';
-      if (/statement/i.test(text)) return '🗒️';
-      if (/advisory/i.test(text)) return '🛑';
-      return 'ℹ️';
-    }
-
     function fetchAndDisplayRSS() {
       const script = document.createElement('script');
       script.src = "https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml&callback=showRSS";
@@ -120,12 +180,45 @@
         document.getElementById('ticker-text').textContent = "No alerts available.";
         return;
       }
-      const text = data.items
-        .map(item => item.title)
-        .filter(title => !/temperature|weather\\.gc\\.ca/i.test(title))
-        .map(t => getIconForAlert(t) + " " + t)
-        .join(" • ");
-      document.getElementById('ticker-text').textContent = text || "No current alerts.";
+
+      const ticker = document.getElementById('ticker-text');
+      const body = document.body;
+      const badge = document.getElementById("alert-badge");
+      let alerts = [];
+
+      data.items.forEach(item => {
+        let matched = false;
+        for (let alert in alertEmojis) {
+          if (item.title.includes(alert)) {
+            alerts.push(`${alertEmojis[alert]} ${item.title}`);
+            matched = true;
+            // Badge + red/yellow border logic
+            if (/Warning/i.test(item.title) && /(Rain|Snow|Storm|Wind|Fog|Cold|Heat|Thunder|Tornado|Hurricane|Freezing|Drizzle)/i.test(item.title)) {
+              body.classList.add('alert-warning');
+              badge.textContent = item.title;
+              badge.classList.remove("watch");
+              badge.style.display = "block";
+            } else if (/Watch/i.test(item.title) && /(Rain|Snow|Storm|Wind|Fog|Cold|Heat|Thunder|Tornado|Hurricane|Freezing|Drizzle)/i.test(item.title)) {
+              body.classList.add('alert-watch');
+              badge.textContent = item.title;
+              badge.classList.add("watch");
+              badge.style.display = "block";
+            }
+            break;
+          }
+        }
+
+        if (!matched) {
+          for (let term in forecastEmojis) {
+            if (item.title.includes(term)) {
+              alerts.push(`${forecastEmojis[term]} ${item.title}`);
+              break;
+            }
+          }
+        }
+      });
+
+      ticker.textContent = alerts.length > 0 ? alerts.join(" • ") : "No current alerts.";
     }
 
     updateTime();
