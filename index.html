@@ -177,35 +177,10 @@
       let alerts = [];
 
       data.items.forEach(item => {
+        alerts.push(item.title);
+
         if (/°C/.test(item.description) && /Wind:/i.test(item.description)) {
           alerts.push(extractConditions(item.description));
-          return;
-        }
-
-        let matched = false;
-        for (let alert in alertEmojis) {
-          if (item.title.includes(alert)) {
-            alerts.push(`${alertEmojis[alert]} ${item.title}`);
-            matched = true;
-
-            if (/Warning/i.test(item.title) && /(Rain|Snow|Storm|Wind|Fog|Cold|Heat|Thunder|Tornado|Hurricane|Freezing|Drizzle)/i.test(item.title)) {
-              bar.style.backgroundColor = "rgba(255, 0, 0, 0.8)";
-            } else if (/Watch/i.test(item.title) && /(Rain|Snow|Storm|Wind|Fog|Cold|Heat|Thunder|Tornado|Hurricane|Freezing|Drizzle)/i.test(item.title)) {
-              bar.style.backgroundColor = "rgba(255, 255, 0, 0.8)";
-            }
-            break;
-          }
-        }
-
-        if (!matched) {
-          for (let term in forecastEmojis) {
-            if (item.title.includes(term)) {
-              const isNight = /night/i.test(item.title);
-              const emoji = forecastEmojis[term][isNight ? 1 : 0];
-              alerts.push(`${emoji} ${item.title}`);
-              break;
-            }
-          }
         }
       });
 
