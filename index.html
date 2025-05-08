@@ -2,141 +2,128 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Yarmouth, NS Weather</title>
+  <title>Weather Overlay - Yarmouth, NS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body {
+    html, body {
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f1f9ff;
-      color: #003366;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
       overflow: hidden;
+      background: black;
     }
 
-    header {
-      background-color: #005aa7;
+    .background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    .top-overlay {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background-color: #00BFFF;
       color: white;
-      padding: 20px;
-      text-align: center;
-      font-size: 2.2em;
+      padding: 12px 24px;
       font-weight: bold;
-    }
-
-    #time {
-      font-size: 1.5em;
-      margin-top: 5px;
-    }
-
-    main {
-      padding: 20px;
+      font-size: 2rem;
+      border-radius: 10px;
+      z-index: 10;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      height: calc(100vh - 130px);
-      overflow-y: auto;
+      gap: 16px;
     }
 
-    .forecast-day {
-      background-color: white;
-      border: 2px solid #cde7f9;
-      border-radius: 8px;
-      padding: 15px;
-      margin: 10px 0;
-      width: 90%;
-      max-width: 800px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    .datetime {
+      font-size: 1.4rem;
+      font-weight: normal;
     }
 
-    .forecast-day h2 {
-      font-size: 1.4em;
-      margin-bottom: 10px;
+    .ticker {
+      position: absolute;
+      bottom: 15px;
+      width: 100%;
+      z-index: 10;
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: white;
+      text-shadow: 1px 1px 2px black;
     }
 
-    .forecast-day img {
-      width: 64px;
-      height: 64px;
-      float: right;
-      margin-left: 10px;
+    marquee {
+      width: 100%;
+      display: inline-block;
     }
-
-    .forecast-day p {
-      font-size: 1.1em;
-      font-weight: bold;
-    }
-
-    footer {
-      text-align: center;
-      font-size: 0.9em;
-      color: #666;
-      padding: 10px;
-    }
-
   </style>
 </head>
 <body>
-  <header>
-    Yarmouth, NS Weather
-    <div id="time">Loading time...</div>
-  </header>
 
-  <main id="forecast">Loading...</main>
+  <!-- Background Weather Display -->
+  <iframe class="background" src="http://kitchen.screenfeed.com/feed/4n1sf2ms6qe684xkzs75pw1d5v.html"></iframe>
 
-  <footer>
-    Data from Environment Canada | Auto-refreshes every 30 minutes
-  </footer>
+  <!-- Top Time and Location -->
+  <div class="top-overlay">
+    📍 YARMOUTH, NS
+    <span class="datetime" id="datetime"></span>
+  </div>
+
+  <!-- Scrolling Weather Alerts -->
+  <div class="ticker">
+    <marquee behavior="scroll" direction="left" scrollamount="5" id="ticker-text">
+      Loading alerts...
+    </marquee>
+  </div>
 
   <script>
-    const feedUrl = "https://weather.gc.ca/rss/weather/43.791_-65.967_e.xml";
-
     function updateTime() {
+      const now = new Date();
       const options = {
-        timeZone: 'America/Halifax',
+        timeZone: "America/Halifax",
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
         hour: 'numeric',
-        minute: 'numeric',
-        hour12: true
+        minute: '2-digit'
       };
-      document.getElementById('time').textContent = new Date().toLocaleTimeString('en-CA', options);
+      document.getElementById('datetime').textContent =
+        new Intl.DateTimeFormat('en-CA', options).format(now);
     }
 
-    async function fetchForecast() {
-      const res = await fetch(feedUrl);
-      const text = await res.text();
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(text, "text/xml");
+    function getIconForAlert(text) {
+      if (/warning/i.test(text)) return '⚠️';
+      if (/watch/i.test(text)) return '🔍';
+      if (/statement/i.test(text)) return '🗒️';
+      if (/advisory/i.test(text)) return '🛑';
+      return 'ℹ️';
+    }
 
-      const items = xml.querySelectorAll("item");
-      const forecastContainer = document.getElementById("forecast");
-      forecastContainer.innerHTML = "";
+    function fetchAndDisplayRSS() {
+      const script = document.createElement('script');
+      script.src = "https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml&callback=showRSS";
+      document.body.appendChild(script);
+    }
 
-      let count = 0;
-      for (let i = 0; i < items.length && count < 7; i++) {
-        const title = items[i].querySelector("title").textContent;
-        const desc = items[i].querySelector("description").textContent;
-        const img = items[i].querySelector("description").innerHTML.match(/src="(.*?)"/);
-        const iconUrl = img ? img[1] : "";
-
-        // Group day and night if possible
-        if (title.toLowerCase().includes("night") && forecastContainer.lastElementChild) {
-          // append to previous block
-          forecastContainer.lastElementChild.innerHTML += `<p><strong>${title}:</strong> ${desc}</p>`;
-        } else {
-          const dayDiv = document.createElement("div");
-          dayDiv.className = "forecast-day";
-          dayDiv.innerHTML = `<h2>${title}</h2>
-                              ${iconUrl ? `<img src="${iconUrl}" alt="${title} icon">` : ""}
-                              <p>${desc}</p>`;
-          forecastContainer.appendChild(dayDiv);
-          count++;
-        }
+    function showRSS(data) {
+      if (!data || !data.items) {
+        document.getElementById('ticker-text').textContent = "No alerts available.";
+        return;
       }
+      const text = data.items
+        .map(item => item.title)
+        .filter(title => !/temperature|weather\\.gc\\.ca/i.test(title))
+        .map(t => getIconForAlert(t) + " " + t)
+        .join(" • ");
+      document.getElementById('ticker-text').textContent = text || "No current alerts.";
     }
 
     updateTime();
-    fetchForecast();
-    setInterval(() => {
-      updateTime();
-      fetchForecast();
-    }, 1800000); // 30 min
+    setInterval(updateTime, 60000);
+    fetchAndDisplayRSS();
   </script>
 </body>
 </html>
