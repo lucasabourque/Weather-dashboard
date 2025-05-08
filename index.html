@@ -23,7 +23,6 @@
       z-index: 0;
       border: none;
       pointer-events: none;
-      will-change: transform;
     }
 
     .top-overlay {
@@ -60,7 +59,6 @@
       z-index: 10;
       opacity: 0;
       animation: fadein 2s ease-out forwards;
-      transition: background-color 0.5s ease;
     }
 
     marquee {
@@ -92,59 +90,6 @@
   </div>
 
   <script>
-    const alertEmojis = {
-      "Rainfall Warning": "🌧️", "Snowfall Warning": "❄️", "Wind Warning": "💨",
-      "Heat Warning": "🔥", "Extreme Cold Warning": "🥶", "Freezing Rain Warning": "🧊",
-      "Fog Advisory": "🌫️", "Thunderstorm Warning": "⛈️", "Tornado Warning": "🌪️",
-      "Hurricane Warning": "🌀", "Blizzard Warning": "🌨️", "Frost Advisory": "🧊",
-      "Dust Storm Warning": "🌬️", "Flash Freeze Warning": "🧊", "Coastal Flood Warning": "🌊",
-      "Tsunami Warning": "🌊", "Winter Storm Warning": "❄️", "Snow Squall Warning": "🌨️",
-      "Freezing Drizzle Advisory": "🧊", "Arctic Outflow Warning": "🌬️",
-      "Severe Thunderstorm Watch": "🌩️", "Severe Thunderstorm Warning": "🌩️",
-      "Tornado Watch": "🌪️", "Hurricane Watch": "🌀", "Tropical Storm Watch": "🌀",
-      "Tropical Storm Warning": "🌀", "Wind Chill Warning": "🥶", "Extreme Wind Warning": "💨"
-    };
-
-    const forecastEmojis = {
-      "Sunny": ["☀️", "☀️"],
-      "Clear": ["🌙", "🌙"],
-      "Mainly Sunny": ["🌤️", "☁️"],
-      "Partly Cloudy": ["⛅", "☁️"],
-      "Cloudy": ["☁️", "☁️"],
-      "A mix of sun and cloud": ["🌥️", "☁️"],
-      "Periods of rain": ["🌦️", "🌧️"],
-      "Rain": ["🌧️", "🌧️"],
-      "Rain and wind": ["🌧️💨", "🌧️💨"],
-      "Showers": ["🌦️", "🌧️"],
-      "Thunderstorms": ["⛈️", "⛈️"],
-      "Snow": ["❄️", "❄️"],
-      "Flurries": ["🌨️", "🌨️"],
-      "Fog": ["🌫️", "🌫️"],
-      "Drizzle": ["🌦️", "🌧️"],
-      "Freezing Rain": ["🧊", "🧊"],
-      "Hail": ["🌨️", "🌨️"],
-      "Windy": ["💨", "💨"],
-      "Cold": ["🥶", "🥶"],
-      "Hot": ["🔥", "🔥"]
-    };
-
-    function extractConditions(html) {
-      const temp = html.match(/(-?\\d+\\.?\\d*)°C/);
-      const wind = html.match(/Wind: ([^<]*)/);
-      const humidity = html.match(/Humidity: (\\d+%)/);
-      const pressure = html.match(/Pressure: ([^<]*)/);
-      const visib = html.match(/Visibility: ([^<]*)/);
-
-      let summary = "";
-      if (temp) summary += `🌡️ ${temp[1]}°C `;
-      if (wind) summary += `💨 ${wind[1]} `;
-      if (humidity) summary += `💧 ${humidity[1]} `;
-      if (pressure) summary += `📈 ${pressure[1]} `;
-      if (visib) summary += `👁️ ${visib[1]} `;
-
-      return summary.trim();
-    }
-
     function updateTime() {
       const now = new Date();
       const options = {
@@ -159,6 +104,26 @@
         new Intl.DateTimeFormat('en-CA', options).format(now);
     }
 
+    function extractConditions(description) {
+      const div = document.createElement('div');
+      div.innerHTML = description;
+      const text = div.textContent || "";
+
+      const temp = text.match(/(-?\\d+\\.?\\d*)\\s*°C/);
+      const wind = text.match(/Wind:\\s*([^,]+)/i);
+      const humidity = text.match(/Humidity:\\s*(\\d+%)/i);
+      const pressure = text.match(/Pressure:\\s*([\\d.]+\\s*kPa)/i);
+      const visibility = text.match(/Visibility:\\s*([\\d.]+\\s*km)/i);
+
+      let out = "";
+      if (temp) out += `🌡️ ${temp[1]}°C `;
+      if (wind) out += `💨 ${wind[1]} `;
+      if (humidity) out += `💧 ${humidity[1]} `;
+      if (pressure) out += `📈 ${pressure[1]} `;
+      if (visibility) out += `👁️ ${visibility[1]} `;
+      return out.trim();
+    }
+
     function fetchAndDisplayRSS() {
       const script = document.createElement('script');
       script.src = "https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml&callback=showRSS";
@@ -166,31 +131,28 @@
     }
 
     function showRSS(data) {
-      if (!data || !data.items) {
-        document.getElementById("ticker-text").textContent = "No alerts available.";
-        document.getElementById("ticker").style.backgroundColor = "black";
-        return;
-      }
-
       const ticker = document.getElementById('ticker-text');
       const bar = document.getElementById('ticker');
       let alerts = [];
 
+      if (!data || !data.items) {
+        ticker.textContent = "No alerts available.";
+        return;
+      }
+
       data.items.forEach(item => {
         alerts.push(item.title);
-        if (/°C/.test(item.description) && /Wind:/i.test(item.description)) {
-          alerts.push(extractConditions(item.description));
-        }
+        const conditions = extractConditions(item.description);
+        if (conditions) alerts.push(conditions);
       });
 
       ticker.textContent = alerts.length > 0 ? alerts.join(" • ") : "No current alerts.";
     }
 
     updateTime();
-    setInterval(updateTime, 60000); // update clock every 60 sec
-
+    setInterval(updateTime, 60000);               // Clock every 1 minute
     fetchAndDisplayRSS();
-    setInterval(fetchAndDisplayRSS, 1800000); // update ticker every 30 min
+    setInterval(fetchAndDisplayRSS, 1800000);     // RSS every 30 minutes
   </script>
 </body>
 </html>
