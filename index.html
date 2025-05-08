@@ -52,7 +52,7 @@
       bottom: 44px;
       width: 100%;
       text-align: center;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: bold;
       color: black;
       background-color: white;
@@ -74,6 +74,13 @@
       opacity: 0;
       animation: fadein 2s ease-out forwards;
       transition: background-color 0.5s ease;
+    }
+
+    .highlight {
+      background-color: yellow;
+      color: red;
+      padding: 0 6px;
+      border-radius: 4px;
     }
 
     marquee {
@@ -122,46 +129,6 @@
       "Tropical Storm Warning": "🌀", "Wind Chill Warning": "🥶", "Extreme Wind Warning": "💨"
     };
 
-    const forecastEmojis = {
-      "Sunny": ["☀️", "☀️"],
-      "Clear": ["🌙", "🌙"],
-      "Mainly Sunny": ["🌤️", "☁️"],
-      "Partly Cloudy": ["⛅", "☁️"],
-      "Cloudy": ["☁️", "☁️"],
-      "A mix of sun and cloud": ["🌥️", "☁️"],
-      "Periods of rain": ["🌦️", "🌧️"],
-      "Rain": ["🌧️", "🌧️"],
-      "Rain and wind": ["🌧️💨", "🌧️💨"],
-      "Showers": ["🌦️", "🌧️"],
-      "Thunderstorms": ["⛈️", "⛈️"],
-      "Snow": ["❄️", "❄️"],
-      "Flurries": ["🌨️", "🌨️"],
-      "Fog": ["🌫️", "🌫️"],
-      "Drizzle": ["🌦️", "🌧️"],
-      "Freezing Rain": ["🧊", "🧊"],
-      "Hail": ["🌨️", "🌨️"],
-      "Windy": ["💨", "💨"],
-      "Cold": ["🥶", "🥶"],
-      "Hot": ["🔥", "🔥"]
-    };
-
-    function extractConditions(html) {
-      const temp = html.match(/(-?\d+\.?\d*)°C/);
-      const wind = html.match(/Wind: ([^<]*)/);
-      const humidity = html.match(/Humidity: (\d+%)/);
-      const pressure = html.match(/Pressure: ([^<]*)/);
-      const visib = html.match(/Visibility: ([^<]*)/);
-
-      let summary = "";
-      if (temp) summary += `🌡️ ${temp[1]}°C `;
-      if (wind) summary += `💨 ${wind[1]} `;
-      if (humidity) summary += `💧 ${humidity[1]} `;
-      if (pressure) summary += `📈 ${pressure[1]} `;
-      if (visib) summary += `👁️ ${visib[1]} `;
-
-      return summary.trim();
-    }
-
     function updateTime() {
       const now = new Date();
       const options = {
@@ -183,24 +150,29 @@
     }
 
     function showRSS(data) {
+      const ticker = document.getElementById('ticker-text');
       if (!data || !data.items) {
-        document.getElementById("ticker-text").textContent = "No alerts available.";
-        document.getElementById("ticker").style.backgroundColor = "black";
+        ticker.textContent = "No alerts available.";
         return;
       }
 
-      const ticker = document.getElementById('ticker-text');
-      const bar = document.getElementById('ticker');
       let alerts = [];
 
       data.items.forEach(item => {
-        alerts.push(item.title);
-        if (/°C/.test(item.description) && /Wind:/i.test(item.description)) {
-          alerts.push(extractConditions(item.description));
+        const title = item.title;
+        const isAlert = /(warning|watch|statement)/i.test(title);
+        const isForecast = /forecast/i.test(title);
+
+        if (isAlert) {
+          alerts.push(`<span class="highlight">${title}</span>`);
+        } else if (isForecast) {
+          alerts.push(title);
         }
       });
 
-      ticker.textContent = alerts.length > 0 ? alerts.join(" • ") : "No current alerts.";
+      ticker.innerHTML = alerts.length > 0
+        ? alerts.join(" • ")
+        : "No current alerts.";
     }
 
     updateTime();
