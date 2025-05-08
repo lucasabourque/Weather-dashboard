@@ -99,6 +99,15 @@
       padding: 0 6px;
       border-radius: 4px;
     }
+
+    @keyframes flash-alert {
+      0%, 100% { background-color: black; }
+      50% { background-color: red; }
+    }
+
+    .flash {
+      animation: flash-alert 1s infinite;
+    }
   </style>
 </head>
 <body>
@@ -142,17 +151,15 @@
     async function updateTicker() {
       const ticker = document.getElementById("ticker-text");
 
-      // --- WEATHER UNDERGROUND DATA ---
       const wuData = await fetch("https://weather.lucasabourque.workers.dev/")
         .then(res => res.json())
         .catch(() => []);
 
       const wuEntries = wuData.map(entry => {
         const { name, temp, humidity, wind_kph } = entry;
-        return `${name}: ${temp}°C, Wind ${wind_kph} km/h, Humidity ${humidity}%`;
+        return `📍 ${name}: ${temp}°C, Wind ${wind_kph} km/h, Humidity ${humidity}%`;
       });
 
-      // --- ENVIRONMENT CANADA DATA ---
       const ecData = await fetch("https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml")
         .then(res => res.json())
         .then(data => data.items || [])
@@ -161,20 +168,21 @@
       const ecEntries = ecData.map(item => {
         const title = item.title.trim();
         const description = item.description.replace(/<[^>]+>/g, '').trim();
+        const text = `${title}: ${description}`.replace(/\.\s*/g, ". ").replace(/\s+/g, " ");
         const matchedTerm = ecAlertTerms.find(term => title.toLowerCase().startsWith(term.toLowerCase()));
 
         if (matchedTerm) {
           const icon = ecAlertIcons[matchedTerm] || "⚠️";
-          return `<span class="highlight">${icon} ${title}: ${description}</span>`;
+          return `<span class="highlight flash">${icon} ${text}</span>`;
         }
 
-        return `${title}: ${description}`;
+        return `ℹ️ ${text}`;
       });
 
       const combined = [...wuEntries, ...ecEntries];
 
       ticker.innerHTML = combined.length > 0
-        ? combined.join(" • ")
+        ? combined.join(" •• ")
         : "No weather data available.";
 
       const duration = Math.max(35, ticker.textContent.length / 2.5);
