@@ -48,14 +48,12 @@
 
     .ticker-info {
       position: absolute;
-      bottom: 44px;
+      bottom: 48px;
       width: 100%;
       text-align: center;
-      font-size: 0.95rem;
+      font-size: 0.85rem;
       font-weight: bold;
-      color: black;
-      background-color: white;
-      padding: 4px 0;
+      color: white;
       z-index: 11;
     }
 
@@ -177,8 +175,9 @@
         ? alerts.join(" • ")
         : "No current alerts.";
 
-      // Adjust animation speed based on text length
-      const duration = Math.max(30, ticker.textContent.length / 3); // roughly 3 chars/sec
+      // Adjust scroll duration based on text length
+      const baseLength = ticker.textContent.length;
+      const duration = Math.max(30, baseLength / 3);
       ticker.style.animationDuration = `${duration}s`;
     }
 
