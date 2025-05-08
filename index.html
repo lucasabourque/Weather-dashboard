@@ -9,7 +9,7 @@
       margin: 0;
       padding: 0;
       height: 100%;
-      font-family: Arial, sans-serif;
+      font-family: "Segoe UI Emoji", "Noto Color Emoji", Arial, sans-serif;
       overflow: hidden;
       background: black;
     }
@@ -47,15 +47,17 @@
       font-weight: normal;
     }
 
-    .ticker-note {
+    .ticker-message {
       position: absolute;
-      bottom: 48px;
+      bottom: 50px;
       width: 100%;
       text-align: center;
-      font-size: 1.2rem;
-      color: #cccccc;
-      font-style: italic;
-      z-index: 10;
+      font-size: 2rem;
+      font-weight: bold;
+      color: black;
+      background-color: white;
+      padding: 10px 0;
+      z-index: 11;
     }
 
     .ticker {
@@ -92,34 +94,70 @@
   </iframe>
 
   <div class="top-overlay">
-    YARMOUTH, NS
+    📍 YARMOUTH, NS
     <span class="datetime" id="datetime"></span>
   </div>
 
-  <div class="ticker-note">
-    Above forecast is multi-model. Below in the ticker is sourced from weather.gc.ca.
+  <div class="ticker-message">
+    Above forecast is multi-model. Below in the ticker is sourced from weather.gc.ca
   </div>
 
   <div class="ticker" id="ticker">
-    <marquee behavior="scroll" direction="left" scrollamount="6" id="ticker-text">
+    <marquee behavior="scroll" direction="left" scrollamount="7" id="ticker-text">
       Loading alerts...
     </marquee>
   </div>
 
   <script>
+    const alertEmojis = {
+      "Rainfall Warning": "🌧️", "Snowfall Warning": "❄️", "Wind Warning": "💨",
+      "Heat Warning": "🔥", "Extreme Cold Warning": "🥶", "Freezing Rain Warning": "🧊",
+      "Fog Advisory": "🌫️", "Thunderstorm Warning": "⛈️", "Tornado Warning": "🌪️",
+      "Hurricane Warning": "🌀", "Blizzard Warning": "🌨️", "Frost Advisory": "🧊",
+      "Dust Storm Warning": "🌬️", "Flash Freeze Warning": "🧊", "Coastal Flood Warning": "🌊",
+      "Tsunami Warning": "🌊", "Winter Storm Warning": "❄️", "Snow Squall Warning": "🌨️",
+      "Freezing Drizzle Advisory": "🧊", "Arctic Outflow Warning": "🌬️",
+      "Severe Thunderstorm Watch": "🌩️", "Severe Thunderstorm Warning": "🌩️",
+      "Tornado Watch": "🌪️", "Hurricane Watch": "🌀", "Tropical Storm Watch": "🌀",
+      "Tropical Storm Warning": "🌀", "Wind Chill Warning": "🥶", "Extreme Wind Warning": "💨"
+    };
+
+    const forecastEmojis = {
+      "Sunny": ["☀️", "☀️"],
+      "Clear": ["🌙", "🌙"],
+      "Mainly Sunny": ["🌤️", "☁️"],
+      "Partly Cloudy": ["⛅", "☁️"],
+      "Cloudy": ["☁️", "☁️"],
+      "A mix of sun and cloud": ["🌥️", "☁️"],
+      "Periods of rain": ["🌦️", "🌧️"],
+      "Rain": ["🌧️", "🌧️"],
+      "Rain and wind": ["🌧️💨", "🌧️💨"],
+      "Showers": ["🌦️", "🌧️"],
+      "Thunderstorms": ["⛈️", "⛈️"],
+      "Snow": ["❄️", "❄️"],
+      "Flurries": ["🌨️", "🌨️"],
+      "Fog": ["🌫️", "🌫️"],
+      "Drizzle": ["🌦️", "🌧️"],
+      "Freezing Rain": ["🧊", "🧊"],
+      "Hail": ["🌨️", "🌨️"],
+      "Windy": ["💨", "💨"],
+      "Cold": ["🥶", "🥶"],
+      "Hot": ["🔥", "🔥"]
+    };
+
     function extractConditions(html) {
-      const temp = html.match(/(-?\\d+\\.?\\d*)°C/);
+      const temp = html.match(/(-?\d+\.?\d*)°C/);
       const wind = html.match(/Wind: ([^<]*)/);
-      const humidity = html.match(/Humidity: (\\d+%)/);
+      const humidity = html.match(/Humidity: (\d+%)/);
       const pressure = html.match(/Pressure: ([^<]*)/);
       const visib = html.match(/Visibility: ([^<]*)/);
 
       let summary = "";
-      if (temp) summary += `Temp: ${temp[1]}°C `;
-      if (wind) summary += `Wind: ${wind[1]} `;
-      if (humidity) summary += `Humidity: ${humidity[1]} `;
-      if (pressure) summary += `Pressure: ${pressure[1]} `;
-      if (visib) summary += `Visibility: ${visib[1]} `;
+      if (temp) summary += `🌡️ ${temp[1]}°C `;
+      if (wind) summary += `💨 ${wind[1]} `;
+      if (humidity) summary += `💧 ${humidity[1]} `;
+      if (pressure) summary += `📈 ${pressure[1]} `;
+      if (visib) summary += `👁️ ${visib[1]} `;
 
       return summary.trim();
     }
@@ -140,21 +178,20 @@
 
     function fetchAndDisplayRSS() {
       const script = document.createElement('script');
-      script.src = "https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml&callback=showRSS&_=" + Date.now();
+      script.src = "https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml&callback=showRSS";
       document.body.appendChild(script);
     }
 
     function showRSS(data) {
-      const ticker = document.getElementById('ticker-text');
-      const bar = document.getElementById('ticker');
-
-      if (!data || !data.items || data.items.length === 0) {
-        ticker.textContent = "No alerts available.";
-        bar.style.backgroundColor = "black";
+      if (!data || !data.items) {
+        document.getElementById("ticker-text").textContent = "No alerts available.";
+        document.getElementById("ticker").style.backgroundColor = "black";
         return;
       }
 
-      const alerts = [];
+      const ticker = document.getElementById('ticker-text');
+      const bar = document.getElementById('ticker');
+      let alerts = [];
 
       data.items.forEach(item => {
         alerts.push(item.title);
@@ -169,7 +206,6 @@
     updateTime();
     setInterval(updateTime, 60000);
     fetchAndDisplayRSS();
-    setInterval(fetchAndDisplayRSS, 300000); // auto-refresh every 5 min
   </script>
 </body>
 </html>
