@@ -187,8 +187,10 @@
     }
 
     updateTime();
-    setInterval(updateTime, 60000);
+    setInterval(updateTime, 60000); // update clock every 60 sec
+
     fetchAndDisplayRSS();
+    setInterval(fetchAndDisplayRSS, 1800000); // update ticker every 30 min
   </script>
 </body>
 </html>
