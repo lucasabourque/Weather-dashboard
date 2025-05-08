@@ -51,8 +51,8 @@
       bottom: 44px;
       width: 100%;
       text-align: center;
-      font-size: 1rem;
-      font-weight: bold;
+      font-size: 1.2rem;
+      font-weight: 900;
       color: white;
       background-color: rgba(0, 0, 0, 0.5);
       padding: 6px 10px;
@@ -138,11 +138,6 @@
 
     const ecAlertTerms = Object.keys(ecAlertIcons);
 
-    const triggerKeywords = [
-      "rain", "snow", "freezing", "wind", "fog", "thunderstorm", "tornado",
-      "hurricane", "cold", "heat", "blizzard", "storm", "squall", "drizzle"
-    ];
-
     function updateTime() {
       const now = new Date();
       const options = {
@@ -159,7 +154,7 @@
 
     function fetchAndDisplayRSS() {
       const script = document.createElement('script');
-      const timestamp = new Date().getTime();
+      const timestamp = new Date().getTime(); // prevent caching
       script.src = "https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml&t=" + timestamp + "&callback=showRSS";
       document.body.appendChild(script);
     }
