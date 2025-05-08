@@ -53,8 +53,8 @@
       text-align: center;
       font-size: 0.85rem;
       font-weight: bold;
-      color: white;
       z-index: 11;
+      transition: color 0.3s ease;
     }
 
     .ticker {
@@ -112,7 +112,7 @@
     <span class="datetime" id="datetime"></span>
   </div>
 
-  <div class="ticker-info">
+  <div class="ticker-info" id="ticker-info">
     Above forecast is multi-model. Below in the ticker is sourced from weather.gc.ca
   </div>
 
@@ -175,15 +175,25 @@
         ? alerts.join(" • ")
         : "No current alerts.";
 
-      // Adjust scroll duration based on text length
       const baseLength = ticker.textContent.length;
       const duration = Math.max(30, baseLength / 3);
       ticker.style.animationDuration = `${duration}s`;
     }
 
+    function adjustTickerInfoColor() {
+      const bg = window.getComputedStyle(document.body).backgroundColor;
+      const rgb = bg.match(/\d+/g);
+      const brightness = rgb
+        ? (parseInt(rgb[0]) * 299 + parseInt(rgb[1]) * 587 + parseInt(rgb[2]) * 114) / 1000
+        : 0;
+      const textColor = brightness > 128 ? "black" : "white";
+      document.getElementById("ticker-info").style.color = textColor;
+    }
+
     updateTime();
     setInterval(updateTime, 60000);
     fetchAndDisplayRSS();
+    adjustTickerInfoColor();
   </script>
 </body>
 </html>
