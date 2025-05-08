@@ -116,6 +116,16 @@
   </div>
 
   <script>
+    const ecAlertTerms = [
+      "Rainfall Warning", "Snowfall Warning", "Wind Warning", "Heat Warning",
+      "Extreme Cold Warning", "Freezing Rain Warning", "Fog Advisory", "Blizzard Warning",
+      "Winter Storm Warning", "Snow Squall Warning", "Special Weather Statement",
+      "Severe Thunderstorm Watch", "Severe Thunderstorm Warning", "Tornado Watch",
+      "Tornado Warning", "Hurricane Watch", "Hurricane Warning", "Tropical Storm Watch",
+      "Tropical Storm Warning", "Wind Chill Warning", "Flash Freeze Warning",
+      "Arctic Outflow Warning", "Storm Surge Warning", "Storm Surge Watch"
+    ];
+
     function updateTime() {
       const now = new Date();
       const options = {
@@ -132,7 +142,8 @@
 
     function fetchAndDisplayRSS() {
       const script = document.createElement('script');
-      script.src = "https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml&callback=showRSS";
+      const timestamp = new Date().getTime();
+      script.src = "https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml&t=" + timestamp + "&callback=showRSS";
       document.body.appendChild(script);
     }
 
@@ -143,16 +154,12 @@
         return;
       }
 
-      let alerts = [];
-
-      data.items.forEach(item => {
+      const alerts = data.items.map(item => {
         const title = item.title.trim();
-        const isHighlight = /(warning|watch|statement)/i.test(title);
-        const displayText = isHighlight
+        const isExactMatch = ecAlertTerms.some(term => title.toLowerCase().startsWith(term.toLowerCase()));
+        return isExactMatch
           ? `<span class="highlight">${title}</span>`
           : title;
-
-        alerts.push(displayText);
       });
 
       ticker.innerHTML = alerts.length > 0
