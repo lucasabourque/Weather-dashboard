@@ -165,19 +165,28 @@
         .then(data => data.items || [])
         .catch(() => []);
 
-      const ecEntries = ecData.map(item => {
-        const title = item.title.trim();
-        const description = item.description.replace(/<[^>]+>/g, '').trim();
-        const text = `${title}: ${description}`.replace(/\.\s*/g, ". ").replace(/\s+/g, " ");
-        const matchedTerm = ecAlertTerms.find(term => title.toLowerCase().startsWith(term.toLowerCase()));
+      const ecEntries = ecData
+        .filter(item => {
+          const title = item.title.toLowerCase();
+          return (
+            title.includes("warning") ||
+            title.includes("watch") ||
+            /(today|tonight|monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i.test(title)
+          );
+        })
+        .map(item => {
+          const title = item.title.trim();
+          const description = item.description.replace(/<[^>]+>/g, '').trim();
+          const text = `${title}: ${description}`.replace(/\.\s*/g, ". ").replace(/\s+/g, " ");
+          const matchedTerm = ecAlertTerms.find(term => title.toLowerCase().startsWith(term.toLowerCase()));
 
-        if (matchedTerm) {
-          const icon = ecAlertIcons[matchedTerm] || "⚠️";
-          return `<span class="highlight flash">${icon} ${text}</span>`;
-        }
+          if (matchedTerm) {
+            const icon = ecAlertIcons[matchedTerm] || "⚠️";
+            return `<span class="highlight flash">${icon} ${text}</span>`;
+          }
 
-        return `ℹ️ ${text}`;
-      });
+          return `ℹ️ ${text}`;
+        });
 
       const combined = [...wuEntries, ...ecEntries];
 
@@ -185,7 +194,7 @@
         ? combined.join(" •• ")
         : "No weather data available.";
 
-      const duration = Math.max(20, ticker.textContent.length / 2.0); // FASTER SCROLL SPEED
+      const duration = Math.max(18, ticker.textContent.length / 1.8); // Faster but readable
       ticker.style.animationDuration = `${duration}s`;
     }
 
