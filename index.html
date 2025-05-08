@@ -139,6 +139,48 @@
 
     const ecAlertTerms = Object.keys(ecAlertIcons);
 
+    async function updateTicker() {
+      const ticker = document.getElementById("ticker-text");
+
+      // --- WEATHER UNDERGROUND DATA ---
+      const wuData = await fetch("https://weather.lucasabourque.workers.dev/")
+        .then(res => res.json())
+        .catch(() => []);
+
+      const wuEntries = wuData.map(entry => {
+        const { name, temp, humidity, wind_kph } = entry;
+        return `${name}: ${temp}°C, Wind ${wind_kph} km/h, Humidity ${humidity}%`;
+      });
+
+      // --- ENVIRONMENT CANADA DATA ---
+      const ecData = await fetch("https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml")
+        .then(res => res.json())
+        .then(data => data.items || [])
+        .catch(() => []);
+
+      const ecEntries = ecData.map(item => {
+        const title = item.title.trim();
+        const description = item.description.replace(/<[^>]+>/g, '').trim();
+        const matchedTerm = ecAlertTerms.find(term => title.toLowerCase().startsWith(term.toLowerCase()));
+
+        if (matchedTerm) {
+          const icon = ecAlertIcons[matchedTerm] || "⚠️";
+          return `<span class="highlight">${icon} ${title}: ${description}</span>`;
+        }
+
+        return `${title}: ${description}`;
+      });
+
+      const combined = [...wuEntries, ...ecEntries];
+
+      ticker.innerHTML = combined.length > 0
+        ? combined.join(" • ")
+        : "No weather data available.";
+
+      const duration = Math.max(35, ticker.textContent.length / 2.5);
+      ticker.style.animationDuration = `${duration}s`;
+    }
+
     function updateTime() {
       const now = new Date();
       const options = {
@@ -153,58 +195,9 @@
         new Intl.DateTimeFormat('en-CA', options).format(now);
     }
 
-    async function fetchWUConditions() {
-      try {
-        const res = await fetch("https://weather.lucasabourque.workers.dev/");
-        const data = await res.json();
-        return data.map(entry =>
-          `${entry.name}: ${entry.temp}°C, ${entry.condition}`
-        );
-      } catch (e) {
-        return ["Error loading Weather Underground data"];
-      }
-    }
-
-    function fetchECAlerts() {
-      const script = document.createElement('script');
-      const timestamp = new Date().getTime();
-      script.src = "https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml&t=" + timestamp + "&callback=showECAlerts";
-      document.body.appendChild(script);
-    }
-
-    async function showECAlerts(data) {
-      const ticker = document.getElementById('ticker-text');
-      const wuConditions = await fetchWUConditions();
-
-      if (!data || !data.items) {
-        ticker.innerHTML = wuConditions.join(" • ");
-        return;
-      }
-
-      const ecAlerts = data.items.map(item => {
-        const title = item.title.trim();
-        const matchedTerm = ecAlertTerms.find(term =>
-          title.toLowerCase().startsWith(term.toLowerCase())
-        );
-        if (matchedTerm) {
-          const icon = ecAlertIcons[matchedTerm] || "⚠️";
-          return `<span class="highlight">${icon} ${title}</span>`;
-        }
-        return title;
-      });
-
-      const combined = [...wuConditions, ...ecAlerts];
-      ticker.innerHTML = combined.length > 0
-        ? combined.join(" • ")
-        : "No current alerts.";
-
-      const duration = Math.max(35, ticker.textContent.length / 2.5);
-      ticker.style.animationDuration = `${duration}s`;
-    }
-
     updateTime();
     setInterval(updateTime, 60000);
-    fetchECAlerts();
+    updateTicker();
   </script>
 </body>
 </html>
