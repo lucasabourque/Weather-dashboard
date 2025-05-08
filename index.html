@@ -11,7 +11,7 @@
       height: 100%;
       font-family: Arial, sans-serif;
       overflow: hidden;
-      background: black;
+      background-color: black;
     }
 
     iframe {
@@ -119,6 +119,12 @@
       return "• " + text;
     }
 
+    function stripHTML(html) {
+      const tmp = document.createElement("div");
+      tmp.innerHTML = html;
+      return tmp.textContent || tmp.innerText || "";
+    }
+
     async function fetchRSS() {
       const proxy = 'https://api.allorigins.win/get?url=';
       const feed = encodeURIComponent('https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml');
@@ -131,9 +137,9 @@
 
         const alerts = [...items].map(item => {
           const title = item.querySelector("title")?.textContent?.trim() || "";
-          const desc = item.querySelector("description")?.textContent?.trim() || "";
-          const fullText = `${title}: ${desc}`;
-          return fullText;
+          const descRaw = item.querySelector("description")?.textContent || "";
+          const desc = stripHTML(descRaw).replace(/\s+/g, " ").trim();
+          return `${title}: ${desc}`;
         }).filter(text =>
           !/temperature|weather\.gc\.ca/i.test(text)
         ).map(applyIcon);
