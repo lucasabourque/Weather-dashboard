@@ -9,7 +9,7 @@
       margin: 0;
       padding: 0;
       height: 100%;
-      font-family: Arial, sans-serif;
+      font-family: "Segoe UI Emoji", "Noto Color Emoji", Arial, sans-serif;
       overflow: hidden;
       background: black;
     }
@@ -178,7 +178,6 @@
 
       data.items.forEach(item => {
         alerts.push(item.title);
-
         if (/°C/.test(item.description) && /Wind:/i.test(item.description)) {
           alerts.push(extractConditions(item.description));
         }
