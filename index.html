@@ -33,7 +33,7 @@
       color: white;
       padding: 12px 24px;
       font-weight: bold;
-      font-size: 1.8rem;
+      font-size: 2rem;
       border-radius: 10px;
       z-index: 10;
       display: flex;
@@ -41,50 +41,41 @@
       gap: 12px;
     }
 
-    .top-overlay .datetime {
-      font-size: 1.1rem;
+    .datetime {
+      font-size: 1.2rem;
       font-weight: bold;
     }
 
     .ticker-info {
       position: absolute;
-      bottom: 48px;
+      bottom: 44px;
       width: 100%;
       text-align: center;
-      font-size: 1.4rem;
-      font-weight: 1000;
+      font-size: 1rem;
+      font-weight: bold;
       color: white;
-      background-color: rgba(0, 0, 0, 0.6);
-      padding: 10px 14px;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 6px 10px;
       z-index: 11;
-      text-shadow: 1px 1px 3px black;
-    }
-
-    .ticker-info.pulse {
-      animation: pulseBG 1.5s infinite;
-    }
-
-    @keyframes pulseBG {
-      0%, 100% { background-color: rgba(0, 0, 0, 0.6); }
-      50% { background-color: rgba(255, 0, 0, 0.4); }
+      text-shadow: 1px 1px 2px black;
     }
 
     .ticker-info span {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .ticker {
       position: absolute;
       bottom: 0;
       width: 100%;
-      height: 50px;
+      height: 40px;
       background-color: black;
-      font-size: 2rem;
-      font-weight: 1000;
+      font-size: 1.8rem;
+      font-weight: 900;
       color: white;
-      text-shadow: 2px 2px 4px black;
+      text-shadow: 1px 1px 2px black;
       overflow: hidden;
       z-index: 10;
     }
@@ -175,9 +166,6 @@
 
     function showRSS(data) {
       const ticker = document.getElementById('ticker-text');
-      const infoBar = document.getElementById('ticker-info');
-      let shouldPulse = false;
-
       if (!data || !data.items) {
         ticker.innerHTML = "No alerts available.";
         return;
@@ -191,9 +179,6 @@
 
         if (matchedTerm) {
           const icon = ecAlertIcons[matchedTerm] || "⚠️";
-          if (triggerKeywords.some(word => title.toLowerCase().includes(word))) {
-            shouldPulse = true;
-          }
           return `<span class="highlight">${icon} ${title}</span>`;
         }
 
@@ -207,8 +192,6 @@
       const baseLength = ticker.textContent.length;
       const duration = Math.max(35, baseLength / 2.5);
       ticker.style.animationDuration = `${duration}s`;
-
-      infoBar.classList.toggle("pulse", shouldPulse);
     }
 
     updateTime();
