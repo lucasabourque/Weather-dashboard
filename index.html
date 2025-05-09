@@ -51,9 +51,9 @@
       position: absolute;
       bottom: 0;
       width: 100%;
-      height: 70px;
+      height: 80px;
       background-color: black;
-      font-size: 2.4rem;
+      font-size: 3.2rem;
       font-weight: 900;
       color: white;
       text-shadow: 1px 1px 2px black;
@@ -65,7 +65,7 @@
       display: inline-block;
       white-space: nowrap;
       padding-left: 100%;
-      animation: scrollTicker 60s linear infinite;
+      animation: scrollTicker 420s linear infinite;
     }
 
     @keyframes scrollTicker {
@@ -76,122 +76,146 @@
 </head>
 <body>
 
-  <iframe class="background"
-    src="https://kitchen.screenfeed.com/feed/4n1sf2ms6qe684xkzs75pw1d5v.html"
-    allowfullscreen>
-  </iframe>
+<iframe class="background"
+  src="https://kitchen.screenfeed.com/feed/4n1sf2ms6qe684xkzs75pw1d5v.html"
+  allowfullscreen>
+</iframe>
 
-  <div class="top-overlay">
-    📍 <strong>YARMOUTH, NS</strong>
-    <span class="datetime" id="datetime"></span>
-  </div>
+<div class="top-overlay">
+  📍 <strong>YARMOUTH, NS</strong>
+  <span class="datetime" id="datetime"></span>
+</div>
 
-  <div class="ticker">
-    <div class="ticker-content" id="ticker-text">Loading...</div>
-  </div>
+<div class="ticker">
+  <div class="ticker-content" id="ticker-text">Loading...</div>
+</div>
+<script>
+  const stations = {
+    "Sluice Point": [44.0039, -65.5747],
+    "Deerfield": [43.97, -65.95],
+    "Yarmouth": [43.837, -66.117],
+    "Port Maitland": [43.91, -66.17],
+    "Rockville": [43.78, -66.13],
+    "Pubnico": [43.635, -65.788],
+    "Barrington": [43.58, -65.60],
+    "Tusket": [44.16, -65.61],
+    "Dayton": [43.84, -66.09],
+    "Beaver River": [43.88, -66.12],
+    "Cedar Lake": [43.78, -65.95],
+    "Gardners Mills": [43.83, -66.05],
+    "Cape Forchu": [43.76, -66.17],
+    "Brooklyn": [43.87, -66.07],
+    "Hebron": [43.86, -66.06],
+    "Overton": [43.8272, -66.1633],
+    "Arcadia": [43.83, -66.0417],
+    "South Ohio": [43.8920, -66.0176],
+    "Sand Beach": [43.8167, -66.1833]
+  };
 
-  <script>
-    const stations = {
-      "Sluice Point": [44.20897, -65.49994],
-      "Deerfield": [43.97, -65.95],
-      "Yarmouth": [43.837, -66.117],
-      "Port Maitland": [43.91, -66.17],
-      "Rockville": [43.78, -66.13],
-      "Pubnico": [43.635, -65.788],
-      "Barrington": [43.58, -65.60],
-      "Tusket": [44.18885, -65.57580],
-      "Dayton": [43.84, -66.09],
-      "Beaver River": [43.88, -66.12],
-      "Cedar Lake": [43.78, -65.95],
-      "Gardners Mills": [43.83, -66.05],
-      "Cape Forchu": [43.76, -66.17],
-      "Brooklyn": [43.87, -66.07],
-      "Hebron": [43.86, -66.06],
-      "Overton": [43.8272, -66.1633],
-      "Arcadia": [43.83, -66.0417],
-      "South Ohio": [43.8920, -66.0176],
-      "Sand Beach": [43.8167, -66.1833]
-    };
+  const alertColors = {
+    warning: 'red',
+    watch: 'yellow',
+    statement: 'orange'
+  };
 
-    function degToCompass(deg) {
-      const dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
-      return dirs[Math.round(deg / 22.5) % 16];
-    }
+  const terms = [
+    "rainfall warning", "snowfall warning", "wind warning", "thunderstorm warning", "tornado warning",
+    "hurricane warning", "freezing rain warning", "blizzard warning", "fog advisory", "heat warning",
+    "cold warning", "frost advisory", "smoke advisory", "storm surge warning", "snow squall warning",
+    "wind chill warning", "arctic outflow warning", "rainfall watch", "thunderstorm watch",
+    "tornado watch", "hurricane watch", "blizzard watch", "special weather statement"
+  ];
 
-    async function updateTicker() {
-      const ticker = document.getElementById("ticker-text");
-      const conditions = [];
+  function colorizeAlert(text) {
+    const lowered = text.toLowerCase();
+    const matched = terms.find(term => lowered.includes(term));
+    if (!matched) return text;
 
-      for (const [name, [lat, lon]] of Object.entries(stations)) {
-        try {
-          const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relative_humidity_2m,windgusts_10m,visibility,pressure_msl&timezone=auto`);
-          const data = await res.json();
-          const w = data.current_weather;
-          const time = w.time;
-          const index = data.hourly.time.indexOf(time);
+    if (matched.includes("warning")) return `<span style='color: red;'>${text}</span>`;
+    if (matched.includes("watch")) return `<span style='color: yellow;'>${text}</span>`;
+    if (matched.includes("statement")) return `<span style='color: orange;'>${text}</span>`;
+    return text;
+  }
 
-          const humidity = data.hourly.relative_humidity_2m?.[index];
-          const gust = data.hourly.windgusts_10m?.[index];
-          const vis = data.hourly.visibility?.[index];
-          const pressure = data.hourly.pressure_msl?.[index];
+  function degToCompass(deg) {
+    const dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+    return dirs[Math.round(deg / 22.5) % 16];
+  }
 
-          const weatherCodes = {
-            0: "Clear", 1: "Mainly Clear", 2: "Partly Cloudy", 3: "Overcast",
-            45: "Fog", 48: "Freezing Fog", 51: "Light Drizzle", 53: "Drizzle", 55: "Heavy Drizzle",
-            61: "Light Rain", 63: "Rain", 65: "Heavy Rain", 66: "Freezing Rain", 67: "Heavy Freezing Rain",
-            71: "Snow", 73: "Moderate Snow", 75: "Heavy Snow", 77: "Snow Grains",
-            80: "Showers", 81: "Rain Showers", 82: "Violent Showers",
-            95: "Thunderstorm", 96: "Storm + Hail", 99: "Severe Thunderstorm"
-          };
-          const cond = weatherCodes[w.weathercode] || "";
+  async function updateTicker() {
+    const ticker = document.getElementById("ticker-text");
+    const conditions = [];
 
-          let line = `📍 ${name}: ${cond} ${w.temperature}°C, Wind ${w.windspeed} km/h ${degToCompass(w.winddirection)}`;
-          if (gust !== undefined) line += ` (gusts ${gust} km/h)`;
-          if (humidity !== undefined) line += `, Humidity ${humidity}%`;
-          if (pressure !== undefined) line += `, Pressure ${pressure} hPa`;
-          if (vis !== undefined) line += `, Visibility ${(vis / 1000).toFixed(1)} km`;
+    for (const [name, [lat, lon]] of Object.entries(stations)) {
+      try {
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relative_humidity_2m,windgusts_10m,visibility,pressure_msl&timezone=auto`);
+        const data = await res.json();
+        const w = data.current_weather;
+        const time = w.time;
+        const index = data.hourly.time.indexOf(time);
 
-          conditions.push(line);
-        } catch {
-          conditions.push(`📍 ${name}: Weather data unavailable`);
-        }
+        const humidity = data.hourly.relative_humidity_2m?.[index];
+        const gust = data.hourly.windgusts_10m?.[index];
+        const vis = data.hourly.visibility?.[index];
+        const pressure = data.hourly.pressure_msl?.[index];
+
+        const weatherCodes = {
+          0: "Clear", 1: "Mainly Clear", 2: "Partly Cloudy", 3: "Overcast",
+          45: "Fog", 48: "Freezing Fog", 51: "Light Drizzle", 53: "Drizzle", 55: "Heavy Drizzle",
+          61: "Light Rain", 63: "Rain", 65: "Heavy Rain", 66: "Freezing Rain", 67: "Heavy Freezing Rain",
+          71: "Snow", 73: "Moderate Snow", 75: "Heavy Snow", 77: "Snow Grains",
+          80: "Showers", 81: "Rain Showers", 82: "Violent Showers",
+          95: "Thunderstorm", 96: "Storm + Hail", 99: "Severe Thunderstorm"
+        };
+        const cond = weatherCodes[w.weathercode] || "";
+
+        let line = `📍 ${name}: ${cond} ${w.temperature}°C, Wind ${w.windspeed} km/h ${degToCompass(w.winddirection)}`;
+        if (gust !== undefined) line += ` (gusts ${gust} km/h)`;
+        if (humidity !== undefined) line += `, Humidity ${humidity}%`;
+        if (pressure !== undefined) line += `, Pressure ${pressure} hPa`;
+        if (vis !== undefined) line += `, Visibility ${(vis / 1000).toFixed(1)} km`;
+
+        conditions.push(line);
+      } catch {
+        conditions.push(`📍 ${name}: Weather data unavailable`);
       }
-
-      const ecData = await fetch("https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml")
-        .then(res => res.json())
-        .then(data => data.items || [])
-        .catch(() => []);
-
-      const ecEntries = ecData
-        .filter(item => !item.title.toLowerCase().includes("current conditions"))
-        .map(item => {
-          const title = item.title.trim();
-          const desc = item.description.replace(/<[^>]+>/g, '').trim();
-          return `${title}: ${desc}`;
-        });
-
-      const fullTicker = [...conditions, ...ecEntries];
-      ticker.innerHTML = fullTicker.length ? fullTicker.join(" •• ") : "No weather data available.";
     }
 
-    function updateTime() {
-      const now = new Date();
-      const options = {
-        timeZone: "America/Halifax",
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-        hour: "numeric",
-        minute: "2-digit"
-      };
-      document.getElementById("datetime").textContent =
-        new Intl.DateTimeFormat("en-CA", options).format(now);
-    }
+    const ecData = await fetch("https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml")
+      .then(res => res.json())
+      .then(data => data.items || [])
+      .catch(() => []);
 
-    updateTime();
-    setInterval(updateTime, 60000);
-    updateTicker();
-    setInterval(updateTicker, 300000);
-  </script>
+    const ecEntries = ecData
+      .filter(item => !item.title.toLowerCase().includes("current conditions"))
+      .map(item => {
+        const title = item.title.trim();
+        const desc = item.description.replace(/<[^>]+>/g, '').trim();
+        return colorizeAlert(`${title}: ${desc}`);
+      });
+
+    const fullTicker = ["CONDITIONS IN YARMOUTH:", ...conditions, ...ecEntries];
+    ticker.innerHTML = fullTicker.length ? fullTicker.join(" •• ") : "No weather data available.";
+  }
+
+  function updateTime() {
+    const now = new Date();
+    const options = {
+      timeZone: "America/Halifax",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit"
+    };
+    document.getElementById("datetime").textContent =
+      new Intl.DateTimeFormat("en-CA", options).format(now);
+  }
+
+  updateTime();
+  setInterval(updateTime, 60000);
+  updateTicker();
+  setInterval(updateTicker, 300000);
+</script>
 </body>
 </html>
