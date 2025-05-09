@@ -10,7 +10,7 @@
       margin: 0;
       padding: 0;
       height: 100%;
-      font-family: "Segoe UI Emoji", "Noto Color Emoji", Arial, sans-serif;
+      font-family: Arial, sans-serif;
       overflow: hidden;
       background: black;
     }
@@ -100,8 +100,8 @@
     <span class="datetime" id="datetime"></span>
   </div>
 
-  <div class="ticker-info" id="ticker-info">
-    <span>ℹ️ Multi-model forecast above. Alerts and forecast below are provided by Environment Canada.</span>
+  <div class="ticker-info">
+    ℹ️ Multi-model forecast above. Alerts and forecast below are provided by Environment Canada.
   </div>
 
   <div class="ticker">
@@ -109,21 +109,27 @@
   </div>
 
   <script>
+    function degToCompass(deg) {
+      const directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+                          "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+      return directions[Math.round(deg / 22.5) % 16];
+    }
+
     async function updateTicker() {
       const ticker = document.getElementById("ticker-text");
 
-      // Weather Underground data
-      const wuData = await fetch("https://weather.lucasabourque.workers.dev/")
+      // Open-Meteo API: current weather
+      const omURL = "https://api.open-meteo.com/v1/forecast?latitude=43.84&longitude=-66.12&current_weather=true";
+      const openMeteo = await fetch(omURL)
         .then(res => res.json())
-        .catch(() => []);
+        .then(data => {
+          const w = data.current_weather;
+          const windDir = degToCompass(w.winddirection);
+          return `Yarmouth Conditions: ${w.temperature}°C, Wind ${w.windspeed} km/h from ${windDir}`;
+        })
+        .catch(() => "Current conditions unavailable.");
 
-      const wuIntro = "LIVE WEATHER CONDITIONS AROUND YARMOUTH:";
-      const wuEntries = wuData.map(entry => {
-        const { name, temp, humidity, wind_kph } = entry;
-        return `📍 ${name}: ${temp}°C, Wind ${wind_kph} km/h, Humidity ${humidity}%`;
-      });
-
-      // Environment Canada data (filtered to exclude current conditions)
+      // Environment Canada Alerts
       const ecData = await fetch("https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml")
         .then(res => res.json())
         .then(data => data.items || [])
@@ -148,7 +154,7 @@
           return `${title}: ${description}`;
         });
 
-      const combined = [wuIntro, ...wuEntries, ...ecEntries];
+      const combined = [openMeteo, ...ecEntries];
 
       ticker.innerHTML = combined.length
         ? combined.join(" •• ")
@@ -175,6 +181,7 @@
     updateTime();
     setInterval(updateTime, 60000);
     updateTicker();
+    setInterval(updateTicker, 300000); // every 5 mins
   </script>
 </body>
 </html>
