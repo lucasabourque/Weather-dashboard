@@ -109,27 +109,43 @@
   </div>
 
   <script>
-    function degToCompass(deg) {
-      const directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-                          "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
-      return directions[Math.round(deg / 22.5) % 16];
+    const locations = {
+      "Sluice Point": [43.75, -65.97],
+      "Deerfield": [43.97, -65.95],
+      "Yarmouth": [43.84, -66.12],
+      "Port Maitland": [43.91, -66.17],
+      "Rockville": [43.78, -66.13],
+      "West Pubnico": [43.65, -65.78],
+      "Barrington": [43.58, -65.60],
+      "Tusket Falls": [43.75, -66.03],
+      "Dayton": [43.84, -66.09],
+      "Beaver River": [43.88, -66.12],
+      "Cedar Lake": [43.78, -65.95],
+      "Gardners Mills": [43.83, -66.05]
+    };
+
+    function degToCompass(num) {
+      const val = Math.floor((num / 22.5) + 0.5);
+      const arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+                   "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+      return arr[val % 16];
+    }
+
+    async function fetchOpenMeteo(name, lat, lon) {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const w = data.current_weather;
+      return `📍 ${name}: ${w.temperature}°C, Wind ${w.windspeed} km/h from ${degToCompass(w.winddirection)}`;
     }
 
     async function updateTicker() {
       const ticker = document.getElementById("ticker-text");
 
-      // Open-Meteo API: current weather
-      const omURL = "https://api.open-meteo.com/v1/forecast?latitude=43.84&longitude=-66.12&current_weather=true";
-      const openMeteo = await fetch(omURL)
-        .then(res => res.json())
-        .then(data => {
-          const w = data.current_weather;
-          const windDir = degToCompass(w.winddirection);
-          return `Yarmouth Conditions: ${w.temperature}°C, Wind ${w.windspeed} km/h from ${windDir}`;
-        })
-        .catch(() => "Current conditions unavailable.");
+      const openMeteoEntries = await Promise.all(
+        Object.entries(locations).map(([name, [lat, lon]]) => fetchOpenMeteo(name, lat, lon))
+      );
 
-      // Environment Canada Alerts
       const ecData = await fetch("https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml")
         .then(res => res.json())
         .then(data => data.items || [])
@@ -154,11 +170,10 @@
           return `${title}: ${description}`;
         });
 
-      const combined = [openMeteo, ...ecEntries];
-
-      ticker.innerHTML = combined.length
+      const combined = [...openMeteoEntries, ...ecEntries];
+      ticker.textContent = combined.length > 0
         ? combined.join(" •• ")
-        : "No weather data available.";
+        : "No current weather or alerts available.";
 
       const duration = Math.max(3, ticker.textContent.length / 6);
       ticker.style.animationDuration = `${duration}s`;
@@ -181,7 +196,7 @@
     updateTime();
     setInterval(updateTime, 60000);
     updateTicker();
-    setInterval(updateTicker, 300000); // every 5 mins
+    setInterval(updateTicker, 300000); // refresh every 5 minutes
   </script>
 </body>
 </html>
