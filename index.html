@@ -82,26 +82,6 @@
 </div>
 
 <script>
-const stations = {
-  "Sluice Point": [43.9536, -65.7394],
-  "Deerfield": [43.97, -65.95],
-  "Yarmouth": [43.837, -66.117],
-  "Port Maitland": [43.91, -66.17],
-  "Rockville": [43.78, -66.13],
-  "Pubnico": [43.635, -65.788],
-  "Barrington": [43.58, -65.60],
-  "Tusket": [43.9632, -65.7562],
-  "Beaver River": [43.88, -66.12],
-  "Cape Forchu": [43.76, -66.17],
-  "Hebron": [43.86, -66.06],
-  "Overton": [43.8272, -66.1633],
-  "South Ohio": [43.8920, -66.0176],
-  "Lower Wedgeport": [43.7279, -65.9697],
-  "Melbourne": [43.8356, -65.9763],
-  "Abrams River": [43.8976, -65.9900],
-  "Argyle": [43.8219, -65.9611]
-};
-
 const terms = [
   "rainfall warning", "snowfall warning", "wind warning", "thunderstorm warning", "tornado warning",
   "hurricane warning", "freezing rain warning", "blizzard warning", "fog advisory", "heat warning",
@@ -120,47 +100,8 @@ function colorizeAlert(text) {
   return text;
 }
 
-function degToCompass(deg) {
-  const dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE",
-                "S","SSW","SW","WSW","W","WNW","NW","NNW"];
-  return dirs[Math.round(deg / 22.5) % 16];
-}
-
 async function updateTicker() {
   const ticker = document.getElementById("ticker-text");
-  const conditions = [];
-
-  for (const [name, [lat, lon]] of Object.entries(stations)) {
-    try {
-      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relative_humidity_2m,windgusts_10m,visibility,pressure_msl&timezone=auto`);
-      const data = await res.json();
-      const w = data.current_weather;
-      const time = w.time;
-      const index = data.hourly.time.indexOf(time);
-      const humidity = data.hourly.relative_humidity_2m?.[index];
-      const gust = data.hourly.windgusts_10m?.[index];
-      const vis = data.hourly.visibility?.[index];
-      const pressure = data.hourly.pressure_msl?.[index];
-
-      const weatherCodes = {
-        0: "Clear", 1: "Mainly Clear", 2: "Partly Cloudy", 3: "Overcast",
-        45: "Fog", 48: "Freezing Fog", 51: "Light Drizzle", 53: "Drizzle", 55: "Heavy Drizzle",
-        61: "Light Rain", 63: "Rain", 65: "Heavy Rain", 66: "Freezing Rain", 67: "Heavy Freezing Rain",
-        71: "Snow", 73: "Moderate Snow", 75: "Heavy Snow", 77: "Snow Grains",
-        80: "Showers", 81: "Rain Showers", 82: "Violent Showers",
-        95: "Thunderstorm", 96: "Storm + Hail", 99: "Severe Thunderstorm"
-      };
-      const cond = weatherCodes[w.weathercode] || "";
-      let line = `📍 ${name}: ${cond} ${w.temperature}°C, Wind ${w.windspeed} km/h ${degToCompass(w.winddirection)}`;
-      if (gust !== undefined) line += ` (gusts ${gust} km/h)`;
-      if (humidity !== undefined) line += `, Humidity ${humidity}%`;
-      if (pressure !== undefined) line += `, Pressure ${pressure} hPa`;
-      if (vis !== undefined) line += `, Visibility ${(vis / 1000).toFixed(1)} km`;
-      conditions.push(line);
-    } catch {
-      conditions.push(`📍 ${name}: Weather data unavailable`);
-    }
-  }
 
   const ecData = await fetch("https://api.rss2json.com/v1/api.json?rss_url=https://weather.gc.ca/rss/weather/43.836_-66.12_e.xml")
     .then(res => res.json())
@@ -188,11 +129,7 @@ async function updateTicker() {
     }
   }
 
-  const tickerParts = [];
-  if (alerts.length) tickerParts.push(...alerts);
-  tickerParts.push("CONDITIONS IN YARMOUTH:", ...conditions);
-  tickerParts.push(...forecasts);
-
+  const tickerParts = alerts.concat(forecasts);
   ticker.innerHTML = tickerParts.length ? tickerParts.join(" •• ") : "No weather data available.";
 }
 
