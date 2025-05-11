@@ -14,18 +14,14 @@
       overflow: hidden;
       background: black;
     }
-
     .background {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       z-index: 0;
       border: none;
       pointer-events: none;
     }
-
     .top-overlay {
       position: absolute;
       top: 20px;
@@ -41,12 +37,10 @@
       align-items: center;
       gap: 12px;
     }
-
     .datetime {
       font-size: 1.2rem;
       font-weight: bold;
     }
-
     .ticker {
       position: absolute;
       bottom: 0;
@@ -60,14 +54,12 @@
       overflow: hidden;
       z-index: 10;
     }
-
     .ticker-content {
       display: inline-block;
       white-space: nowrap;
       padding-left: 100%;
       animation: scrollTicker 420s linear infinite;
     }
-
     @keyframes scrollTicker {
       0% { transform: translateX(0%); }
       100% { transform: translateX(-100%); }
@@ -92,14 +84,14 @@
 
 <script>
 const stations = {
-  "Sluice Point": [43.9536, -65.7394], // East Quinan
+  "Sluice Point": [43.9536, -65.7394],
   "Deerfield": [43.97, -65.95],
   "Yarmouth": [43.837, -66.117],
   "Port Maitland": [43.91, -66.17],
   "Rockville": [43.78, -66.13],
   "Pubnico": [43.635, -65.788],
   "Barrington": [43.58, -65.60],
-  "Tusket": [43.9632, -65.7562], // Quinan
+  "Tusket": [43.9632, -65.7562],
   "Beaver River": [43.88, -66.12],
   "Cape Forchu": [43.76, -66.17],
   "Hebron": [43.86, -66.06],
@@ -109,12 +101,6 @@ const stations = {
   "Melbourne": [43.8356, -65.9763],
   "Abrams River": [43.8976, -65.9900],
   "Argyle": [43.8219, -65.9611]
-};
-
-const alertColors = {
-  warning: 'red',
-  watch: 'yellow',
-  statement: 'orange'
 };
 
 const terms = [
@@ -129,7 +115,6 @@ function colorizeAlert(text) {
   const lowered = text.toLowerCase();
   const matched = terms.find(term => lowered.includes(term));
   if (!matched) return text;
-
   if (matched.includes("warning")) return `<span style='color: red;'>${text}</span>`;
   if (matched.includes("watch")) return `<span style='color: yellow;'>${text}</span>`;
   if (matched.includes("statement")) return `<span style='color: orange;'>${text}</span>`;
@@ -153,7 +138,6 @@ async function updateTicker() {
       const w = data.current_weather;
       const time = w.time;
       const index = data.hourly.time.indexOf(time);
-
       const humidity = data.hourly.relative_humidity_2m?.[index];
       const gust = data.hourly.windgusts_10m?.[index];
       const vis = data.hourly.visibility?.[index];
@@ -168,13 +152,11 @@ async function updateTicker() {
         95: "Thunderstorm", 96: "Storm + Hail", 99: "Severe Thunderstorm"
       };
       const cond = weatherCodes[w.weathercode] || "";
-
       let line = `📍 ${name}: ${cond} ${w.temperature}°C, Wind ${w.windspeed} km/h ${degToCompass(w.winddirection)}`;
       if (gust !== undefined) line += ` (gusts ${gust} km/h)`;
       if (humidity !== undefined) line += `, Humidity ${humidity}%`;
       if (pressure !== undefined) line += `, Pressure ${pressure} hPa`;
       if (vis !== undefined) line += `, Visibility ${(vis / 1000).toFixed(1)} km`;
-
       conditions.push(line);
     } catch {
       conditions.push(`📍 ${name}: Weather data unavailable`);
@@ -190,7 +172,10 @@ async function updateTicker() {
     .filter(item => !item.title.toLowerCase().includes("current conditions"))
     .map(item => {
       const title = item.title.trim();
-      const desc = item.description.replace(/<[^>]+>/g, '').trim();
+      const desc = item.description
+        .replace(/<[^>]+>/g, '')
+        .replace(/Forecast issued.*?(?=tag:|$)/gi, '')
+        .trim();
       return colorizeAlert(`${title}: ${desc}`);
     });
 
