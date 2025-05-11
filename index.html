@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>Weather Overlay - Yarmouth, NS</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="refresh" content="600">
+  <meta http-equiv="refresh" content="600" />
   <style>
     html, body {
       margin: 0;
@@ -16,10 +16,8 @@
     }
     .background {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       z-index: 0;
       border: none;
       pointer-events: none;
@@ -60,7 +58,7 @@
       display: inline-block;
       white-space: nowrap;
       padding-left: 100%;
-      animation: scrollTicker 180s linear infinite;
+      animation: scrollTicker 210s linear infinite;
     }
     @keyframes scrollTicker {
       0% { transform: translateX(0%); }
@@ -72,8 +70,7 @@
 
 <iframe class="background"
   src="https://kitchen.screenfeed.com/feed/4n1sf2ms6qe684xkzs75pw1d5v.html"
-  allowfullscreen>
-</iframe>
+  allowfullscreen></iframe>
 
 <div class="top-overlay">
   📍 <strong>YARMOUTH, NS</strong>
@@ -115,11 +112,11 @@ const terms = [
 
 function colorizeAlert(text) {
   const lowered = text.toLowerCase();
-  const matched = terms.find(term => lowered.includes(term));
-  if (!matched) return text;
-  if (matched.includes("warning")) return `<span style='color: red;'>${text}</span>`;
-  if (matched.includes("watch")) return `<span style='color: yellow;'>${text}</span>`;
-  if (matched.includes("statement")) return `<span style='color: orange;'>${text}</span>`;
+  const match = terms.find(term => lowered.includes(term));
+  if (!match) return text;
+  if (match.includes("warning")) return `<span style='color:red;'>${text}</span>`;
+  if (match.includes("watch")) return `<span style='color:yellow;'>${text}</span>`;
+  if (match.includes("statement")) return `<span style='color:orange;'>${text}</span>`;
   return text;
 }
 
@@ -170,19 +167,33 @@ async function updateTicker() {
     .then(data => data.items || [])
     .catch(() => []);
 
-  const ecEntries = ecData
-    .filter(item => !item.title.toLowerCase().includes("current conditions"))
-    .map(item => {
-      const title = item.title.trim();
-      const desc = item.description
-        .replace(/<[^>]+>/g, '')
-        .replace(/Forecast issued.*?(?=tag:|$)/gi, '')
-        .trim();
-      return colorizeAlert(`${title}: ${desc}`);
-    });
+  const alerts = [];
+  const forecasts = [];
 
-  const fullTicker = ["CONDITIONS IN YARMOUTH:", ...conditions, ...ecEntries];
-  ticker.innerHTML = fullTicker.length ? fullTicker.join(" •• ") : "No weather data available.";
+  for (const item of ecData) {
+    const title = item.title.trim();
+    if (title.toLowerCase().includes("current conditions")) continue;
+
+    const desc = item.description
+      .replace(/<[^>]+>/g, '')
+      .replace(/Forecast issued.*?(?=tag:|$)/gi, '')
+      .trim();
+    const message = `${title}: ${desc}`;
+    const lower = message.toLowerCase();
+
+    if (terms.some(term => lower.includes(term))) {
+      alerts.push(colorizeAlert(message));
+    } else {
+      forecasts.push(message);
+    }
+  }
+
+  const tickerParts = [];
+  if (alerts.length) tickerParts.push(...alerts);
+  tickerParts.push("CONDITIONS IN YARMOUTH:", ...conditions);
+  tickerParts.push(...forecasts);
+
+  ticker.innerHTML = tickerParts.length ? tickerParts.join(" •• ") : "No weather data available.";
 }
 
 function updateTime() {
