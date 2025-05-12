@@ -60,7 +60,7 @@
       display: inline-block;
       white-space: nowrap;
       padding-left: 100%;
-      animation: scrollTicker 180s linear infinite;
+      animation: scrollTicker 170s linear infinite;
     }
     @keyframes scrollTicker {
       0% { transform: translateX(0%); }
@@ -143,7 +143,7 @@ function updateTime() {
 updateTime();
 setInterval(updateTime, 60000);
 updateTicker();
-setInterval(updateTicker, 1800000); // 30 minutes
+setInterval(updateTicker, 1800000); // every 30 minutes
 </script>
 </body>
 </html>
