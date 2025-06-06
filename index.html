@@ -2,27 +2,65 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Weather Network Stream (Proxied)</title>
+  <title>Embedded IPTV Stream</title>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  </style>
 </head>
-<body style="margin:0;background:#000;display:flex;justify-content:center;align-items:center;height:100vh;">
-  <video id="video" autoplay muted playsinline style="width:100%;max-width:100%;height:100%;object-fit:cover;"></video>
+<body>
+  <video id="video" autoplay muted playsinline></video>
+
   <script>
     const video = document.getElementById('video');
-    const originalStream = 'http://cf.cdn-amz1.me:80/live/892750f8af4a/7eb5c2daca/414193.m3u8';
-    const streamURL = 'https://corsproxy.io/?' + encodeURIComponent(originalStream);
+    const streamURL = 'http://cxb5b4qn64914385e.u9.cloud-top.me/live/play/UkdObmJtWTRlWGd2VDJGVFVXbE1LeTl1YVd0cU5XSnhVbmx6UlRGb1VWQkdZbGR2T1U5SWN6YzNhejA9/414193';
 
-    if (Hls.isSupported()) {
-      const hls = new Hls();
-      hls.loadSource(streamURL);
-      hls.attachMedia(video);
-      video.play();
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = streamURL;
-      video.play();
-    } else {
-      alert('Your browser does not support HLS.');
+    function playStream() {
+      if (Hls.isSupported()) {
+        const hls = new Hls({ maxBufferLength: 120 });
+        hls.loadSource(streamURL);
+        hls.attachMedia(video);
+
+        hls.on(Hls.Events.ERROR, function (event, data) {
+          if (data.fatal) {
+            switch (data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                hls.recoverMediaError();
+                break;
+              default:
+                location.reload();
+            }
+          }
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = streamURL;
+      }
+
+      video.addEventListener('pause', () => {
+        setTimeout(() => {
+          if (video.paused) video.play();
+        }, 2000);
+      });
+
+      video.play().catch(() => {
+        setTimeout(() => video.play(), 3000);
+      });
     }
+
+    playStream();
   </script>
 </body>
 </html>
