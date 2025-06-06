@@ -2,14 +2,15 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Weather Network Stream</title>
+  <title>Weather Network Stream (Proxied)</title>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </head>
 <body style="margin:0;background:#000;display:flex;justify-content:center;align-items:center;height:100vh;">
   <video id="video" autoplay muted playsinline style="width:100%;max-width:100%;height:100%;object-fit:cover;"></video>
   <script>
     const video = document.getElementById('video');
-    const streamURL = 'http://cf.cdn-amz1.me:80/live/892750f8af4a/7eb5c2daca/414193.m3u8';
+    const originalStream = 'http://cf.cdn-amz1.me:80/live/892750f8af4a/7eb5c2daca/414193.m3u8';
+    const streamURL = 'https://corsproxy.io/?' + encodeURIComponent(originalStream);
 
     if (Hls.isSupported()) {
       const hls = new Hls();
